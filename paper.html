@@ -346,6 +346,63 @@
   .topic:hover .remove { opacity: 1; }
   .topic .remove:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
 
+  .topic .t-move {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .topic:hover .t-move { opacity: 1; }
+  .topic .t-move button {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 9px;
+    line-height: 1;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+  .topic .t-move button:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+  .topic .t-move button:disabled { opacity: 0.3; cursor: default; }
+  .topic .t-move button:disabled:hover { background: transparent; color: var(--ink-soft); }
+
+  .topic .t-edit {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    opacity: 0;
+    font-size: 14px;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  .topic:hover .t-edit { opacity: 1; }
+  .topic .t-edit:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+
+  .topic .label-input {
+    flex: 1;
+    border: 1.5px solid var(--accent);
+    background: var(--bg);
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    border-radius: 6px;
+    min-width: 0;
+  }
+  .topic.editing { border-color: var(--accent-soft); }
+  .topic.editing .chev,
+  .topic.editing .resource-count,
+  .topic.editing .t-edit,
+  .topic.editing .t-move,
+  .topic.editing .remove { display: none; }
+
   .add-topic {
     display: flex;
     gap: 8px;
@@ -1030,7 +1087,8 @@ function renderTopics() {
   const ul = document.getElementById('topics');
   ul.innerHTML = '';
   let lastEra = null;
-  for (const t of d.topics) {
+  for (let i = 0; i < d.topics.length; i++) {
+    const t = d.topics[i];
     if (t.era && t.era !== lastEra) {
       const header = document.createElement('li');
       header.className = 'topic-section';
@@ -1050,11 +1108,18 @@ function renderTopics() {
     const ratingHtml = isSkill
       ? MyPathComfort.bar(comfort, 'sm')
       : `<div class="check" data-act="check"></div>`;
+    const isFirst = i === 0;
+    const isLast = i === d.topics.length - 1;
     li.innerHTML = `
       ${ratingHtml}
       <div class="label">${escapeHtml(t.label)}</div>
       ${badge}
       <span class="chev">›</span>
+      <div class="t-move">
+        <button class="t-up" title="Move up" ${isFirst ? 'disabled' : ''}>▲</button>
+        <button class="t-down" title="Move down" ${isLast ? 'disabled' : ''}>▼</button>
+      </div>
+      <button class="t-edit" title="Edit name">✎</button>
       <button class="remove" title="Remove topic">×</button>
     `;
     if (!isSkill) {
@@ -1068,6 +1133,26 @@ function renderTopics() {
         renderOverall();
       });
     }
+    li.querySelector('.t-up').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = d.topics.findIndex(x => x.id === t.id);
+      if (idx <= 0) return;
+      [d.topics[idx - 1], d.topics[idx]] = [d.topics[idx], d.topics[idx - 1]];
+      save();
+      renderTopics();
+    });
+    li.querySelector('.t-down').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = d.topics.findIndex(x => x.id === t.id);
+      if (idx < 0 || idx >= d.topics.length - 1) return;
+      [d.topics[idx + 1], d.topics[idx]] = [d.topics[idx], d.topics[idx + 1]];
+      save();
+      renderTopics();
+    });
+    li.querySelector('.t-edit').addEventListener('click', (e) => {
+      e.stopPropagation();
+      beginEditTopicLabel(li, t);
+    });
     li.querySelector('.remove').addEventListener('click', (e) => {
       e.stopPropagation();
       if (confirm(`Remove "${t.label}"? Its notes and resources will be deleted too.`)) {
@@ -1079,6 +1164,10 @@ function renderTopics() {
     });
     li.addEventListener('click', (e) => {
       if (e.target.closest('.remove')) return;
+      if (e.target.closest('.t-move')) return;
+      if (e.target.closest('.t-edit')) return;
+      if (e.target.closest('.label-input')) return;
+      if (li.classList.contains('editing')) return;
       if (e.target.dataset.act === 'check') return;
       if (e.target.closest('.cf-bar')) return;
       openTopic(currentDomain.kind, currentDomain.id, t.id);
@@ -1105,6 +1194,41 @@ function renderTopics() {
   document.getElementById('d-progress').textContent =
     total === 0 ? 'no topics yet — add some below' : `avg ${avgC.toFixed(1)} / 10 across ${total} ${total === 1 ? 'topic' : 'topics'} · ${mastered} mastered`;
   document.getElementById('d-bar').style.width = pct + '%';
+}
+
+function beginEditTopicLabel(li, topic) {
+  if (li.classList.contains('editing')) return;
+  li.classList.add('editing');
+  const labelEl = li.querySelector('.label');
+  if (!labelEl) return;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'label-input';
+  input.value = topic.label;
+  labelEl.replaceWith(input);
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const v = input.value.trim();
+    if (v && v !== topic.label) {
+      topic.label = v;
+      save();
+    }
+    renderTopics();
+  };
+  const cancel = () => {
+    if (committed) return;
+    committed = true;
+    renderTopics();
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
+  input.addEventListener('blur', commit);
 }
 
 function closeDetail() {
