@@ -1,7 +1,7 @@
 /* Path PWA — service worker.
    Caches all app assets so the app launches and works offline. The Anthropic
    API and Google Fonts CDN are bypassed (fetched live, optionally cached). */
-const CACHE = 'path-v9';
+const CACHE = 'path-v10';
 const APP_SHELL = [
   './',
   './index.html',

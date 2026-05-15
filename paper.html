@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Path" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <title>Path — everything I want to learn</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Lora:wght@500;600&family=Caveat:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Instrument+Serif&family=EB+Garamond:wght@500;600&family=Bricolage+Grotesque:wght@400;500;600&family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f5efe6;
@@ -383,26 +383,30 @@
   .topic-section {
     list-style: none;
     padding: 0;
-    margin: 22px 0 6px;
+    margin: 28px 0 10px;
     font-family: 'Fraunces', serif;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 22px;
     color: var(--ink);
-    letter-spacing: -0.005em;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--line);
-    padding-bottom: 6px;
+    padding-bottom: 8px;
   }
-  .topic-section:first-child { margin-top: 0; }
+  .topic-section:first-child { margin-top: 8px; }
   .topic-section .era-time {
     font-family: 'Inter', sans-serif;
     font-weight: 400;
-    font-size: 11px;
+    font-style: italic;
+    font-size: 12px;
     color: var(--ink-soft);
     letter-spacing: 0.02em;
   }
+  @media (max-width: 600px) { .topic-section { font-size: 19px; } }
   .topic {
     display: flex;
     align-items: center;
@@ -1090,6 +1094,23 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
+  .size-row { display: flex; gap: 6px; }
+  .size-chip {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: var(--input-bg);
+    color: var(--ink);
+    cursor: pointer;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .size-chip:hover { border-color: var(--accent-soft); }
+  .size-chip.selected { border-color: var(--accent); background: rgba(194,83,42,0.06); color: var(--accent); }
+  body.dark .size-chip.selected { background: rgba(224,123,80,0.10); }
 
   /* ---- fun: paper grain ---- */
   body::after {
@@ -1295,6 +1316,8 @@
 <div class="font-popup" id="font-popup">
   <h4>Topic font</h4>
   <div class="chips" id="font-chips"></div>
+  <h4 style="margin-top:14px;">Size</h4>
+  <div class="size-row" id="size-chips"></div>
 </div>
 </div>
 
@@ -1431,13 +1454,24 @@ function applyTheme(theme) {
 
 /* ---------- topic font picker ---------- */
 const FONT_KEY = 'path:font';
+const FONT_SIZE_KEY = 'path:fontsize';
 const FONTS = [
-  { id: 'fraunces',  family: "'Fraunces', serif",         weight: 500, size: '16.5px', label: 'Fraunces' },
-  { id: 'eb',        family: "'EB Garamond', serif",      weight: 500, size: '17.5px', label: 'EB Garamond' },
-  { id: 'lora',      family: "'Lora', serif",             weight: 500, size: '16px',   label: 'Lora' },
-  { id: 'inter',     family: "'Inter', sans-serif",       weight: 600, size: '15px',   label: 'Inter' },
-  { id: 'caveat',    family: "'Caveat', cursive",         weight: 600, size: '22px',   label: 'Caveat' },
-  { id: 'plex-mono', family: "'IBM Plex Mono', monospace",weight: 400, size: '14px',   label: 'Plex Mono' },
+  { id: 'fraunces',   family: "'Fraunces', serif",            weight: 500, base: 16.5, label: 'Fraunces' },
+  { id: 'newsreader', family: "'Newsreader', serif",          weight: 500, base: 17,   label: 'Newsreader' },
+  { id: 'eb',         family: "'EB Garamond', serif",         weight: 500, base: 17.5, label: 'EB Garamond' },
+  { id: 'crimson',    family: "'Crimson Pro', serif",         weight: 500, base: 17,   label: 'Crimson Pro' },
+  { id: 'instrument', family: "'Instrument Serif', serif",    weight: 400, base: 19,   label: 'Instrument' },
+  { id: 'inter',      family: "'Inter', sans-serif",          weight: 600, base: 15,   label: 'Inter' },
+  { id: 'bricolage',  family: "'Bricolage Grotesque', sans-serif", weight: 500, base: 16, label: 'Bricolage' },
+  { id: 'caveat',     family: "'Caveat', cursive",            weight: 600, base: 22,   label: 'Caveat' },
+  { id: 'mono',       family: "'JetBrains Mono', monospace",  weight: 400, base: 13.5, label: 'JetBrains Mono' },
+];
+
+const SIZES = [
+  { id: 'sm', label: 'S', mult: 0.88 },
+  { id: 'md', label: 'M', mult: 1.0 },
+  { id: 'lg', label: 'L', mult: 1.15 },
+  { id: 'xl', label: 'XL', mult: 1.32 },
 ];
 
 function applyFont(id) {
@@ -1445,28 +1479,62 @@ function applyFont(id) {
   const root = document.documentElement;
   root.style.setProperty('--topic-font', f.family);
   root.style.setProperty('--topic-font-weight', String(f.weight));
-  root.style.setProperty('--topic-font-size', f.size);
+  applySize(currentSizeId(), f);
   document.querySelectorAll('.font-chip').forEach(c => {
     c.classList.toggle('selected', c.dataset.fontId === f.id);
+  });
+}
+function currentFontDef() {
+  let id = null;
+  try { id = localStorage.getItem(FONT_KEY); } catch (e) {}
+  return FONTS.find(x => x.id === id) || FONTS[0];
+}
+function currentSizeId() {
+  let id = null;
+  try { id = localStorage.getItem(FONT_SIZE_KEY); } catch (e) {}
+  return SIZES.find(s => s.id === id) ? id : 'md';
+}
+function applySize(sizeId, fontOverride) {
+  const f = fontOverride || currentFontDef();
+  const sz = SIZES.find(s => s.id === sizeId) || SIZES[1];
+  document.documentElement.style.setProperty('--topic-font-size', (f.base * sz.mult).toFixed(2) + 'px');
+  document.querySelectorAll('.size-chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.sizeId === sz.id);
   });
 }
 
 function buildFontChips() {
   const host = document.getElementById('font-chips');
-  if (!host) return;
-  host.innerHTML = '';
-  for (const f of FONTS) {
-    const c = document.createElement('button');
-    c.className = 'font-chip';
-    c.dataset.fontId = f.id;
-    c.style.fontFamily = f.family;
-    c.style.fontWeight = f.weight;
-    c.innerHTML = `Ancient Egypt<span class="fname">${f.label}</span>`;
-    c.addEventListener('click', () => {
-      applyFont(f.id);
-      try { localStorage.setItem(FONT_KEY, f.id); } catch (e) {}
-    });
-    host.appendChild(c);
+  if (host) {
+    host.innerHTML = '';
+    for (const f of FONTS) {
+      const c = document.createElement('button');
+      c.className = 'font-chip';
+      c.dataset.fontId = f.id;
+      c.style.fontFamily = f.family;
+      c.style.fontWeight = f.weight;
+      c.innerHTML = `Ancient Egypt<span class="fname">${f.label}</span>`;
+      c.addEventListener('click', () => {
+        applyFont(f.id);
+        try { localStorage.setItem(FONT_KEY, f.id); } catch (e) {}
+      });
+      host.appendChild(c);
+    }
+  }
+  const sizeHost = document.getElementById('size-chips');
+  if (sizeHost) {
+    sizeHost.innerHTML = '';
+    for (const s of SIZES) {
+      const c = document.createElement('button');
+      c.className = 'size-chip';
+      c.dataset.sizeId = s.id;
+      c.textContent = s.label;
+      c.addEventListener('click', () => {
+        applySize(s.id);
+        try { localStorage.setItem(FONT_SIZE_KEY, s.id); } catch (e) {}
+      });
+      sizeHost.appendChild(c);
+    }
   }
 }
 
