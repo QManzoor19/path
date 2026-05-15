@@ -1329,7 +1329,8 @@
     <p id="modal-sub"></p>
     <label>Name</label>
     <input type="text" id="modal-name" placeholder="e.g. Astronomy, Pottery..." />
-    <label>Pick an icon</label>
+    <label>Icon — any emoji or character</label>
+    <input type="text" id="modal-icon-input" placeholder="🎯 or paste anything" maxlength="8" />
     <div class="emoji-grid" id="emoji-grid"></div>
     <label>Cover image URL (optional)</label>
     <input type="text" id="modal-cover" placeholder="https://images.unsplash.com/..." />
@@ -1347,7 +1348,8 @@
     <h3>Edit topic</h3>
     <label>Name</label>
     <input type="text" id="te-name" />
-    <label>Icon (optional — pick one or leave blank)</label>
+    <label>Icon — any emoji or character (or pick below)</label>
+    <input type="text" id="te-icon-input" placeholder="🎯 or paste anything, leave blank for none" maxlength="8" />
     <div class="emoji-grid" id="te-emoji-grid"></div>
     <label>Cover image URL (optional)</label>
     <input type="text" id="te-cover" placeholder="https://..." />
@@ -2558,14 +2560,18 @@ function openModal(kind, editId) {
   document.getElementById('modal-cover').value = existing && existing.cover ? existing.cover : '';
   document.getElementById('modal-save').textContent = editing ? 'Save' : 'Add';
   updateCoverPreview('modal-cover', 'modal-cover-preview');
+  const iconInput = document.getElementById('modal-icon-input');
+  iconInput.value = chosenEmoji;
   const eg = document.getElementById('emoji-grid');
   eg.innerHTML = '';
   for (const e of EMOJIS) {
     const b = document.createElement('button');
     b.textContent = e;
+    b.dataset.icon = e;
     if (e === chosenEmoji) b.classList.add('selected');
     b.addEventListener('click', () => {
       chosenEmoji = e;
+      iconInput.value = e;
       eg.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
       b.classList.add('selected');
     });
@@ -2585,6 +2591,13 @@ document.getElementById('modal-bg').addEventListener('click', (e) => {
 });
 document.getElementById('modal-cover').addEventListener('input', () => {
   updateCoverPreview('modal-cover', 'modal-cover-preview');
+});
+document.getElementById('modal-icon-input').addEventListener('input', (e) => {
+  chosenEmoji = e.target.value;
+  const eg = document.getElementById('emoji-grid');
+  eg.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('selected', b.dataset.icon === chosenEmoji);
+  });
 });
 document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('modal-name').value.trim();
@@ -2640,6 +2653,8 @@ function openTopicEditModal(topic) {
   teChosenIcon = topic.icon || '';
   document.getElementById('te-name').value = topic.label;
   document.getElementById('te-cover').value = topic.cover || '';
+  const iconInput = document.getElementById('te-icon-input');
+  iconInput.value = teChosenIcon;
   updateCoverPreview('te-cover', 'te-cover-preview');
   const eg = document.getElementById('te-emoji-grid');
   eg.innerHTML = '';
@@ -2647,10 +2662,12 @@ function openTopicEditModal(topic) {
   for (const e of choices) {
     const b = document.createElement('button');
     b.textContent = e || '∅';
+    b.dataset.icon = e;
     if (!e) b.title = 'No icon';
     if (e === teChosenIcon) b.classList.add('selected');
     b.addEventListener('click', () => {
       teChosenIcon = e;
+      iconInput.value = e;
       eg.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
       b.classList.add('selected');
     });
@@ -2669,6 +2686,13 @@ document.getElementById('te-bg').addEventListener('click', (e) => {
 });
 document.getElementById('te-cover').addEventListener('input', () => {
   updateCoverPreview('te-cover', 'te-cover-preview');
+});
+document.getElementById('te-icon-input').addEventListener('input', (e) => {
+  teChosenIcon = e.target.value;
+  const eg = document.getElementById('te-emoji-grid');
+  eg.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('selected', b.dataset.icon === teChosenIcon);
+  });
 });
 document.getElementById('te-save').addEventListener('click', () => {
   if (!teTopicRef) return;
