@@ -1307,6 +1307,7 @@
 
   <footer class="app-footer">
     <button id="theme-toggle" title="Toggle dark mode"><span id="theme-icon">🌙</span> <span id="theme-label">dark mode</span></button> &nbsp;·&nbsp;
+    <button id="sound-toggle" title="Toggle sound"><span id="sound-icon">🔊</span></button> &nbsp;·&nbsp;
     <button id="font-toggle" title="Choose topic font">Aa font</button> &nbsp;·&nbsp;
     <button id="export-btn">export</button> &nbsp;·&nbsp;
     <button id="import-btn">import</button> &nbsp;·&nbsp;
@@ -1451,6 +1452,112 @@ function applyTheme(theme) {
   }
   applyTheme(theme);
 })();
+
+/* ---------- chimes (open / close) ---------- */
+const SOUND_KEY = 'path:sound';
+let _ctx = null;
+function getCtx() {
+  try {
+    if (!_ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      _ctx = new AC();
+    }
+    if (_ctx.state === 'suspended') _ctx.resume().catch(() => {});
+    return _ctx;
+  } catch (e) { return null; }
+}
+function soundOn() {
+  try { return (localStorage.getItem(SOUND_KEY) || 'on') === 'on'; } catch (e) { return true; }
+}
+function playTone(freq, when, dur, vol) {
+  const ctx = getCtx();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + when;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  // very gentle ASR envelope
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  // a soft sine overtone for warmth
+  const overtone = ctx.createOscillator();
+  const og = ctx.createGain();
+  overtone.type = 'sine';
+  overtone.frequency.value = freq * 2;
+  og.gain.setValueAtTime(0.0001, t0);
+  og.gain.linearRampToValueAtTime(vol * 0.18, t0 + 0.02);
+  og.gain.exponentialRampToValueAtTime(0.0001, t0 + dur * 0.7);
+  osc.connect(gain).connect(ctx.destination);
+  overtone.connect(og).connect(ctx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+  overtone.start(t0); overtone.stop(t0 + dur + 0.05);
+}
+function chimeOpen() {
+  if (!soundOn()) return;
+  // C5, E5, G5 ascending
+  playTone(523.25, 0.00, 0.70, 0.14);
+  playTone(659.25, 0.09, 0.70, 0.13);
+  playTone(783.99, 0.18, 0.85, 0.13);
+}
+function chimeClose() {
+  if (!soundOn()) return;
+  // F5, C5 descending
+  playTone(698.46, 0.00, 0.55, 0.12);
+  playTone(523.25, 0.10, 0.75, 0.11);
+}
+
+// Apply UI state for sound toggle
+function applySoundIcon() {
+  const el = document.getElementById('sound-icon');
+  if (el) el.textContent = soundOn() ? '🔊' : '🔇';
+}
+applySoundIcon();
+
+// Toggle handler
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('sound-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const next = soundOn() ? 'off' : 'on';
+      try { localStorage.setItem(SOUND_KEY, next); } catch (e) {}
+      applySoundIcon();
+      // give a quick preview blip so you know it worked
+      if (next === 'on') playTone(659.25, 0, 0.25, 0.12);
+    });
+  }
+});
+
+// Open chime — try on load + first interaction (autoplay restrictions
+// often block before the user has tapped anything; first tap unlocks).
+let openChimePlayed = false;
+function tryOpenChime() {
+  if (openChimePlayed) return;
+  openChimePlayed = true;
+  chimeOpen();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tryOpenChime);
+} else {
+  tryOpenChime();
+}
+// As a fallback, also fire on the first user interaction
+['pointerdown', 'keydown'].forEach((ev) => {
+  window.addEventListener(ev, function once() {
+    if (!openChimePlayed) tryOpenChime();
+    window.removeEventListener(ev, once);
+  }, { once: true });
+});
+
+// Close chime — fires when the page becomes hidden (user closes PWA,
+// switches apps, locks phone, etc.). Browsers throttle audio on hidden
+// pages, so it may not always sound, but we try.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') chimeClose();
+});
+window.addEventListener('pagehide', () => chimeClose());
 
 /* ---------- topic font picker ---------- */
 const FONT_KEY = 'path:font';
