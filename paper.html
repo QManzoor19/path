@@ -99,6 +99,57 @@
   }
   .overall b { color: var(--ink); font-weight: 700; }
 
+  /* ---- title letter bounce-in ---- */
+  header.app-header h1 .ltr {
+    display: inline-block;
+    animation: ltr-in 0.55s cubic-bezier(.5,1.6,.5,1) backwards;
+    will-change: transform, opacity;
+  }
+  @keyframes ltr-in {
+    0%   { transform: translateY(22px) rotate(-3deg); opacity: 0; }
+    60%  { transform: translateY(-4px) rotate(2deg);  opacity: 1; }
+    100% { transform: translateY(0)    rotate(0);     opacity: 1; }
+  }
+  header.app-header h1 .dot {
+    display: inline-block;
+    animation: ltr-in 0.55s cubic-bezier(.5,1.6,.5,1) backwards, dot-pulse 3.4s ease-in-out infinite 2s;
+    transform-origin: 50% 80%;
+  }
+  @keyframes dot-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+  }
+
+  /* ---- paper plane crossing the page ---- */
+  .paper-plane {
+    position: fixed;
+    top: 14%;
+    left: -60px;
+    width: 38px;
+    height: 38px;
+    pointer-events: none;
+    z-index: 1;
+    color: var(--accent-soft);
+    opacity: 0;
+    animation: plane-cross 38s linear infinite;
+    animation-delay: 6s;
+    will-change: transform, opacity;
+  }
+  body.dark .paper-plane { color: rgba(224,123,80,0.5); }
+  @keyframes plane-cross {
+    0%   { transform: translate(0, 0) rotate(8deg);            opacity: 0; }
+    4%   { opacity: 0.6; }
+    35%  { transform: translate(40vw, 6vh) rotate(-4deg);      opacity: 0.55; }
+    70%  { transform: translate(80vw, 18vh) rotate(6deg);      opacity: 0.45; }
+    95%  { opacity: 0.25; }
+    100% { transform: translate(115vw, 26vh) rotate(14deg);    opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    header.app-header h1 .ltr,
+    header.app-header h1 .dot { animation: none; }
+    .paper-plane { animation: none; opacity: 0; display: none; }
+  }
+
   /* section header */
   .section { margin-top: 36px; }
   .section-head {
@@ -1260,11 +1311,12 @@
 </style>
 </head>
 <body>
+<svg class="paper-plane" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.5 21.5l21-9.5L2.5 2.5v7L17 12 2.5 14.5z"/></svg>
 <div class="wrap">
 
   <header class="app-header">
     <div>
-      <h1>Path<span class="dot">.</span></h1>
+      <h1 id="brand-title"><span class="ltr">P</span><span class="ltr">a</span><span class="ltr">t</span><span class="ltr">h</span><span class="dot">.</span></h1>
       <div class="tagline" id="tagline">Everything I want to learn — one place to chip away at it.</div>
     </div>
     <div class="overall" id="overall">— learned</div>
@@ -1747,6 +1799,17 @@ function applyGreeting() {
   el.innerHTML = `${icon} <span style="opacity:0.85">${line}</span>`;
 }
 applyGreeting();
+
+// stagger the per-letter bounce-in for the brand title
+(function staggerTitle() {
+  const title = document.getElementById('brand-title');
+  if (!title) return;
+  let i = 0;
+  for (const node of title.children) {
+    node.style.animationDelay = (i * 0.08) + 's';
+    i++;
+  }
+})();
 
 /* ---------- ink-dot ripple on tap ---------- */
 document.addEventListener('pointerdown', (e) => {
