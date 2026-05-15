@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Path" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <title>Path — everything I want to learn</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Lora:wght@500;600&family=Caveat:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f5efe6;
@@ -438,9 +438,9 @@
   }
   .topic .label {
     flex: 1;
-    font-family: 'Fraunces', serif;
-    font-weight: 500;
-    font-size: 16.5px;
+    font-family: var(--topic-font, 'Fraunces', serif);
+    font-weight: var(--topic-font-weight, 500);
+    font-size: var(--topic-font-size, 16.5px);
     letter-spacing: -0.008em;
     line-height: 1.3;
     transition: color 0.15s;
@@ -1032,6 +1032,65 @@
   }
   footer.app-footer button:hover { color: var(--accent); }
 
+  /* ---- font picker popup ---- */
+  .font-popup {
+    display: none;
+    position: fixed;
+    bottom: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 12px 32px rgba(60,40,20,0.18);
+    z-index: 80;
+    width: min(420px, calc(100vw - 24px));
+  }
+  body.dark .font-popup { box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+  .font-popup.open { display: block; }
+  .font-popup h4 {
+    margin: 0 0 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+  }
+  .font-popup .chips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  @media (max-width: 480px) { .font-popup .chips { grid-template-columns: 1fr; } }
+  .font-chip {
+    border: 1px solid var(--line);
+    background: var(--input-bg);
+    color: var(--ink);
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 17px;
+    line-height: 1.2;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: inherit;
+  }
+  .font-chip:hover { border-color: var(--accent-soft); }
+  .font-chip.selected { border-color: var(--accent); background: rgba(194,83,42,0.06); }
+  body.dark .font-chip.selected { background: rgba(224,123,80,0.10); }
+  .font-chip .fname {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
   /* ---- fun: paper grain ---- */
   body::after {
     content: '';
@@ -1227,10 +1286,16 @@
 
   <footer class="app-footer">
     <button id="theme-toggle" title="Toggle dark mode"><span id="theme-icon">🌙</span> <span id="theme-label">dark mode</span></button> &nbsp;·&nbsp;
+    <button id="font-toggle" title="Choose topic font">Aa font</button> &nbsp;·&nbsp;
     <button id="export-btn">export</button> &nbsp;·&nbsp;
     <button id="import-btn">import</button> &nbsp;·&nbsp;
     <button id="reset-btn">reset all</button>
   </footer>
+
+<div class="font-popup" id="font-popup">
+  <h4>Topic font</h4>
+  <div class="chips" id="font-chips"></div>
+</div>
 </div>
 
 <!-- DOMAIN MODAL (add + edit) -->
@@ -1362,6 +1427,55 @@ function applyTheme(theme) {
     theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
   }
   applyTheme(theme);
+})();
+
+/* ---------- topic font picker ---------- */
+const FONT_KEY = 'path:font';
+const FONTS = [
+  { id: 'fraunces',  family: "'Fraunces', serif",         weight: 500, size: '16.5px', label: 'Fraunces' },
+  { id: 'eb',        family: "'EB Garamond', serif",      weight: 500, size: '17.5px', label: 'EB Garamond' },
+  { id: 'lora',      family: "'Lora', serif",             weight: 500, size: '16px',   label: 'Lora' },
+  { id: 'inter',     family: "'Inter', sans-serif",       weight: 600, size: '15px',   label: 'Inter' },
+  { id: 'caveat',    family: "'Caveat', cursive",         weight: 600, size: '22px',   label: 'Caveat' },
+  { id: 'plex-mono', family: "'IBM Plex Mono', monospace",weight: 400, size: '14px',   label: 'Plex Mono' },
+];
+
+function applyFont(id) {
+  const f = FONTS.find(x => x.id === id) || FONTS[0];
+  const root = document.documentElement;
+  root.style.setProperty('--topic-font', f.family);
+  root.style.setProperty('--topic-font-weight', String(f.weight));
+  root.style.setProperty('--topic-font-size', f.size);
+  document.querySelectorAll('.font-chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.fontId === f.id);
+  });
+}
+
+function buildFontChips() {
+  const host = document.getElementById('font-chips');
+  if (!host) return;
+  host.innerHTML = '';
+  for (const f of FONTS) {
+    const c = document.createElement('button');
+    c.className = 'font-chip';
+    c.dataset.fontId = f.id;
+    c.style.fontFamily = f.family;
+    c.style.fontWeight = f.weight;
+    c.innerHTML = `Ancient Egypt<span class="fname">${f.label}</span>`;
+    c.addEventListener('click', () => {
+      applyFont(f.id);
+      try { localStorage.setItem(FONT_KEY, f.id); } catch (e) {}
+    });
+    host.appendChild(c);
+  }
+}
+
+(function initFont() {
+  buildFontChips();
+  let id = null;
+  try { id = localStorage.getItem(FONT_KEY); } catch (e) {}
+  if (!id || !FONTS.find(x => x.id === id)) id = 'fraunces';
+  applyFont(id);
 })();
 
 /* ---------- time-of-day greeting (rotating variants) ---------- */
@@ -2413,6 +2527,24 @@ document.getElementById('te-name').addEventListener('keydown', (e) => {
 });
 
 /* ---------- footer actions ---------- */
+document.getElementById('font-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('font-popup').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('font-popup');
+  if (!pop || !pop.classList.contains('open')) return;
+  if (pop.contains(e.target)) return;
+  if (e.target.closest('#font-toggle')) return;
+  pop.classList.remove('open');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const pop = document.getElementById('font-popup');
+    if (pop) pop.classList.remove('open');
+  }
+});
+
 document.getElementById('theme-toggle').addEventListener('click', (e) => {
   const isDark = document.body.classList.contains('dark');
   const next = isDark ? 'light' : 'dark';
