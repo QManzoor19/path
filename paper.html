@@ -219,6 +219,37 @@
   }
   .add-card .plus { font-size: 26px; line-height: 1; }
 
+  /* add bar at bottom of home view */
+  .add-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 32px 0 8px;
+    flex-wrap: wrap;
+  }
+  .add-btn {
+    border: 1.5px dashed var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(194,83,42,0.04);
+  }
+  body.dark .add-btn:hover { background: rgba(224,123,80,0.07); }
+  .add-btn .plus { font-size: 18px; font-weight: 600; }
+
   /* domain card with cover */
   .card.has-cover {
     position: relative;
@@ -337,6 +368,20 @@
     font-size: 12px;
   }
   .cover-preview.has-cover { border-style: solid; color: transparent; }
+  .cover-row { display: flex; gap: 6px; margin: -6px 0 10px; }
+  .cover-upload-btn, .cover-clear-btn {
+    border: 1px solid var(--line);
+    background: var(--input-bg);
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .cover-upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cover-clear-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* detail view */
   .detail { display: none; }
@@ -1260,6 +1305,11 @@
       </div>
       <div class="grid" id="grid-skill"></div>
     </div>
+
+    <div class="add-bar">
+      <button class="add-btn add-subject" id="add-subject-btn"><span class="plus">+</span> add subject</button>
+      <button class="add-btn add-skill" id="add-skill-btn"><span class="plus">+</span> add skill</button>
+    </div>
   </div>
 
   <!-- DETAIL VIEW -->
@@ -1353,8 +1403,13 @@
     <label>Icon — any emoji or character</label>
     <input type="text" id="modal-icon-input" placeholder="🎯 or paste anything" maxlength="8" />
     <div class="emoji-grid" id="emoji-grid"></div>
-    <label>Cover image URL (optional)</label>
+    <label>Cover image (paste a URL or upload a photo)</label>
     <input type="text" id="modal-cover" placeholder="https://images.unsplash.com/..." />
+    <div class="cover-row">
+      <button type="button" class="cover-upload-btn" id="modal-cover-upload">📷 upload photo</button>
+      <button type="button" class="cover-clear-btn" id="modal-cover-clear">clear</button>
+      <input type="file" accept="image/*" id="modal-cover-file" style="display:none" />
+    </div>
     <div class="cover-preview" id="modal-cover-preview">no cover</div>
     <div class="actions">
       <button class="btn-secondary" id="modal-cancel">Cancel</button>
@@ -1372,8 +1427,13 @@
     <label>Icon — any emoji or character (or pick below)</label>
     <input type="text" id="te-icon-input" placeholder="🎯 or paste anything, leave blank for none" maxlength="8" />
     <div class="emoji-grid" id="te-emoji-grid"></div>
-    <label>Cover image URL (optional)</label>
+    <label>Cover image (paste a URL or upload a photo)</label>
     <input type="text" id="te-cover" placeholder="https://..." />
+    <div class="cover-row">
+      <button type="button" class="cover-upload-btn" id="te-cover-upload">📷 upload photo</button>
+      <button type="button" class="cover-clear-btn" id="te-cover-clear">clear</button>
+      <input type="file" accept="image/*" id="te-cover-file" style="display:none" />
+    </div>
     <div class="cover-preview" id="te-cover-preview">no cover</div>
     <div class="actions">
       <button class="btn-secondary" id="te-cancel">Cancel</button>
@@ -1574,13 +1634,6 @@ if (document.readyState === 'loading') {
   }, { once: true });
 });
 
-// Close chime — fires when the page becomes hidden (user closes PWA,
-// switches apps, locks phone, etc.). Browsers throttle audio on hidden
-// pages, so it may not always sound, but we try.
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') chimeClose();
-});
-window.addEventListener('pagehide', () => chimeClose());
 
 /* ---------- topic font picker ---------- */
 const FONT_KEY = 'path:font';
@@ -1867,12 +1920,6 @@ function renderGrid(kind) {
     });
     grid.appendChild(card);
   }
-  const add = document.createElement('div');
-  add.className = 'add-card';
-  add.innerHTML = `<span class="plus">+</span><span>add ${kind}</span>`;
-  add.addEventListener('click', () => openModal(kind));
-  grid.appendChild(add);
-
   document.getElementById('count-' + kind).textContent =
     totalTopics === 0 ? '' : `${totalMastered} mastered · ${totalTopics} ${totalTopics === 1 ? 'topic' : 'topics'}`;
 }
@@ -1940,7 +1987,6 @@ function renderTopics() {
       ${iconHtml}
       <div class="label">${escapeHtml(t.label)}</div>
       ${badge}
-      <span class="chev">›</span>
       <div class="t-drag" title="Drag to reorder" aria-label="Reorder">⋮⋮</div>
       <button class="remove" title="Remove topic">×</button>
     `;
@@ -2476,6 +2522,8 @@ function closeTopicAndDetail() {
   closeDetail();
 }
 
+document.getElementById('add-subject-btn').addEventListener('click', () => openModal('subject'));
+document.getElementById('add-skill-btn').addEventListener('click', () => openModal('skill'));
 document.getElementById('topic-back').addEventListener('click', closeTopic);
 document.getElementById('topic-edit-btn').addEventListener('click', () => {
   const t = getTopic();
@@ -2562,6 +2610,65 @@ function updateCoverPreview(inputId, previewId) {
     pv.style.backgroundImage = '';
   }
 }
+
+function fileToCompressedDataURL(file, maxDim = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const scale = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function wireCoverUpload(uploadBtnId, fileInputId, urlInputId, previewId, clearBtnId) {
+  const btn = document.getElementById(uploadBtnId);
+  const file = document.getElementById(fileInputId);
+  const url = document.getElementById(urlInputId);
+  const clear = document.getElementById(clearBtnId);
+  if (!btn || !file || !url) return;
+  btn.addEventListener('click', () => file.click());
+  file.addEventListener('change', async () => {
+    if (!file.files || !file.files[0]) return;
+    const original = btn.textContent;
+    btn.textContent = '…compressing';
+    btn.disabled = true;
+    try {
+      const dataUrl = await fileToCompressedDataURL(file.files[0]);
+      url.value = dataUrl;
+      updateCoverPreview(urlInputId, previewId);
+    } catch (e) {
+      alert('Could not load that image.');
+    } finally {
+      btn.textContent = original;
+      btn.disabled = false;
+      file.value = '';
+    }
+  });
+  if (clear) clear.addEventListener('click', () => {
+    url.value = '';
+    updateCoverPreview(urlInputId, previewId);
+  });
+}
+wireCoverUpload('modal-cover-upload', 'modal-cover-file', 'modal-cover', 'modal-cover-preview', 'modal-cover-clear');
+wireCoverUpload('te-cover-upload',    'te-cover-file',    'te-cover',    'te-cover-preview',    'te-cover-clear');
 
 function openModal(kind, editId) {
   modalKind = kind;
@@ -2836,7 +2943,228 @@ function escapeHtml(s) {
 render();
 </script>
 <script src="ai.js"></script>
-<script>MyPathAI.init({ theme: 'paper', getNavContext: () => currentTopic });</script>
+<script>
+/* ---------- AI tool handlers (lets the bot edit the app) ---------- */
+function _aiFindDomain(name) {
+  if (!name) return null;
+  const lc = String(name).toLowerCase().trim();
+  for (const kind of ['subject', 'skill']) {
+    for (const d of state[kind]) {
+      if (d.name.toLowerCase() === lc) return { d, kind };
+    }
+  }
+  for (const kind of ['subject', 'skill']) {
+    for (const d of state[kind]) {
+      if (d.name.toLowerCase().includes(lc)) return { d, kind };
+    }
+  }
+  return null;
+}
+function _aiFindTopic(d, label) {
+  if (!d || !label) return null;
+  const lc = String(label).toLowerCase().trim();
+  return d.topics.find(t => t.label.toLowerCase() === lc)
+      || d.topics.find(t => t.label.toLowerCase().includes(lc));
+}
+function _aiRefresh() {
+  render();
+  if (currentDomain) renderTopics();
+  if (currentTopic) { renderTopicState(); renderNotes(); renderResources(); }
+}
+function _aiStateSummary() {
+  const summary = { subjects: [], skills: [] };
+  for (const kind of ['subject', 'skill']) {
+    const dest = kind === 'subject' ? summary.subjects : summary.skills;
+    for (const d of state[kind]) {
+      dest.push({
+        name: d.name,
+        emoji: d.emoji,
+        topic_count: d.topics.length,
+        topics: d.topics.map(t => ({
+          label: t.label,
+          comfort: t.comfort || 0,
+          notes: (t.notesList || []).length + (t.notes && t.notes.trim() ? 1 : 0),
+          resources: (t.resources || []).length,
+        })),
+      });
+    }
+  }
+  return summary;
+}
+
+const AI_TOOLS = {
+  list_state: {
+    description: 'List all subjects, skills, and their topics with comfort levels. Call this first if you need to know what already exists in the app before adding or editing anything.',
+    input_schema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: () => ({ summary: '✓ listed state', state: _aiStateSummary() }),
+  },
+  add_topic: {
+    description: 'Add a new topic to an existing subject or skill domain. Use the domain name (e.g. "History", "Guitar").',
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string', description: 'Name of the subject or skill domain.' },
+        label: { type: 'string', description: 'The topic name.' },
+        icon: { type: 'string', description: 'Optional emoji or single character.' },
+      },
+      required: ['domain', 'label'],
+    },
+    handler: ({ domain, label, icon }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain named "${domain}".` };
+      const topic = {
+        id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        label, done: false, comfort: 0, notes: '', resources: [],
+      };
+      if (icon) topic.icon = icon;
+      found.d.topics.push(topic);
+      save(); _aiRefresh();
+      return { summary: `✓ added "${label}" to ${found.d.name}` };
+    },
+  },
+  rename_topic: {
+    description: 'Rename a topic within a domain.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string' },
+        old_label: { type: 'string' },
+        new_label: { type: 'string' },
+      },
+      required: ['domain', 'old_label', 'new_label'],
+    },
+    handler: ({ domain, old_label, new_label }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain "${domain}".` };
+      const t = _aiFindTopic(found.d, old_label);
+      if (!t) return { error: `No topic "${old_label}" in ${found.d.name}.` };
+      t.label = new_label;
+      save(); _aiRefresh();
+      return { summary: `✓ renamed "${old_label}" → "${new_label}"` };
+    },
+  },
+  delete_topic: {
+    description: 'Delete a topic from a domain.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string' },
+        label: { type: 'string' },
+      },
+      required: ['domain', 'label'],
+    },
+    handler: ({ domain, label }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain "${domain}".` };
+      const t = _aiFindTopic(found.d, label);
+      if (!t) return { error: `No topic "${label}" in ${found.d.name}.` };
+      found.d.topics = found.d.topics.filter(x => x.id !== t.id);
+      save(); _aiRefresh();
+      return { summary: `✓ deleted "${t.label}" from ${found.d.name}` };
+    },
+  },
+  set_comfort: {
+    description: "Set the user's comfort level (0-10) for a topic. 0 = not started, 10 = mastered.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string' },
+        label: { type: 'string' },
+        comfort: { type: 'number', minimum: 0, maximum: 10 },
+      },
+      required: ['domain', 'label', 'comfort'],
+    },
+    handler: ({ domain, label, comfort }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain "${domain}".` };
+      const t = _aiFindTopic(found.d, label);
+      if (!t) return { error: `No topic "${label}" in ${found.d.name}.` };
+      const c = Math.max(0, Math.min(10, Math.round(Number(comfort))));
+      t.comfort = c;
+      t.done = c >= 10;
+      save(); _aiRefresh();
+      return { summary: `✓ set "${t.label}" to ${c}/10` };
+    },
+  },
+  add_note: {
+    description: 'Add a note to a topic.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string' },
+        label: { type: 'string' },
+        text: { type: 'string' },
+      },
+      required: ['domain', 'label', 'text'],
+    },
+    handler: ({ domain, label, text }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain "${domain}".` };
+      const t = _aiFindTopic(found.d, label);
+      if (!t) return { error: `No topic "${label}" in ${found.d.name}.` };
+      if (!Array.isArray(t.notesList)) t.notesList = [];
+      t.notesList.unshift({
+        id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        text: String(text),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      save(); _aiRefresh();
+      return { summary: `✓ added note to "${t.label}"` };
+    },
+  },
+  add_resource: {
+    description: 'Add a resource (link, article, video, book, course, podcast, or plain note) to a topic.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string' },
+        label: { type: 'string' },
+        type: { type: 'string', enum: ['link','article','video','book','course','podcast','note'] },
+        title: { type: 'string' },
+        url: { type: 'string', description: 'Optional URL.' },
+      },
+      required: ['domain', 'label', 'type', 'title'],
+    },
+    handler: ({ domain, label, type, title, url }) => {
+      const found = _aiFindDomain(domain);
+      if (!found) return { error: `No domain "${domain}".` };
+      const t = _aiFindTopic(found.d, label);
+      if (!t) return { error: `No topic "${label}" in ${found.d.name}.` };
+      let u = (url || '').trim();
+      if (u && !/^https?:\/\//i.test(u) && !/^mailto:/i.test(u)) u = 'https://' + u;
+      t.resources = t.resources || [];
+      t.resources.push({
+        id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        type, title, url: u,
+      });
+      save(); _aiRefresh();
+      return { summary: `✓ added ${type} "${title}" to "${t.label}"` };
+    },
+  },
+  add_domain: {
+    description: 'Create a new subject or skill domain.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        kind: { type: 'string', enum: ['subject', 'skill'] },
+        name: { type: 'string' },
+        emoji: { type: 'string', description: 'Optional emoji.' },
+      },
+      required: ['kind', 'name'],
+    },
+    handler: ({ kind, name, emoji }) => {
+      if (kind !== 'subject' && kind !== 'skill') return { error: 'kind must be subject or skill' };
+      const id = (kind === 'subject' ? 's_' : 'k_') + Date.now();
+      const dom = { id, emoji: emoji || (kind === 'subject' ? '📚' : '🎨'), name, topics: [] };
+      state[kind].push(dom);
+      save(); _aiRefresh();
+      return { summary: `✓ added ${kind} "${name}"` };
+    },
+  },
+};
+MyPathAI.init({ theme: 'paper', getNavContext: () => currentTopic, tools: AI_TOOLS });
+</script>
 <script>if ('serviceWorker' in navigator) { addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }</script>
 </body>
 </html>

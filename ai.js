@@ -13,6 +13,7 @@
 
   let theme = 'paper';
   let getNavContext = () => null;
+  let toolConfig = null; // { name: { description, input_schema, handler } }
 
   const STYLES = `
     .mp-fab { position: fixed; bottom: 20px; right: 20px; width: 54px; height: 54px; border: none; cursor: pointer; z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: transform 0.18s ease, box-shadow 0.18s ease; font-family: inherit; }
@@ -37,6 +38,8 @@
     .mp-msg.user { align-self: flex-end; background: var(--mp-user-bg); color: var(--mp-user-fg); }
     .mp-msg.assistant { align-self: flex-start; background: var(--mp-asst-bg); color: var(--mp-asst-fg); }
     .mp-msg.err { background: rgba(220, 60, 60, 0.12) !important; color: #c62828 !important; font-size: 13px; }
+    .mp-msg.tool { align-self: center; background: transparent; color: var(--mp-muted); font-size: 12px; padding: 2px 8px; max-width: 100%; text-align: center; opacity: 0.85; }
+    .mp-msg.tool.err { color: #c62828; opacity: 1; }
 
     .mp-empty { color: var(--mp-muted); font-size: 13px; text-align: center; padding: 40px 24px; line-height: 1.6; }
     .mp-empty .big { font-size: 28px; margin-bottom: 10px; }
@@ -151,12 +154,16 @@
   function saveChat(h) { localStorage.setItem(chatKey(), JSON.stringify(h)); }
 
   function buildSystem(topic) {
+    const hasTools = toolConfig && Object.keys(toolConfig).length > 0;
+    const toolHint = hasTools
+      ? `\n\nYou have tools that let you directly edit the user's app (add/rename/delete topics, set comfort, add notes & resources, create domains). When the user asks you to make a change, USE THE TOOLS rather than just describing what to do. Call list_state first if you need to know what already exists. After making changes, give a brief one-line summary of what you did.`
+      : '';
     if (!topic) {
       return `You are a warm, curious learning companion in an app called Path, where the user tracks everything they want to learn — across subjects (history, psychology, economics, etc.) and skills (guitar, cooking, gardening, etc.).
 
 Your job is to help them learn. Be concise and direct. Ask what they're curious about. Suggest concrete next steps. Use Socratic questions when useful. Don't lecture — guide.
 
-If they ask for a curriculum or topic breakdown, give them a tight checklist they could paste into their tracker.`;
+If they ask for a curriculum or topic breakdown, give them a tight checklist they could paste into their tracker.${toolHint}`;
     }
     return `You are a friendly, patient tutor in an app called Path. The user is currently on the page for the topic "${topic.label}" — part of "${topic.domainName}" in their ${topic.kind === 'subject' ? 'Subjects' : 'Skills'} section.
 
@@ -169,7 +176,19 @@ ${(topic.notes || '').trim() || '(no notes yet)'}
 
 They have gathered ${topic.resourceCount} resource(s) on this topic so far.
 
-Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socratic when it helps. If they seem stuck, simplify with analogies. If they show mastery, deepen the question. Suggest concrete things they can do, read, watch, or try next — pointing at specific exercises or references when you can.`;
+Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socratic when it helps. If they seem stuck, simplify with analogies. If they show mastery, deepen the question. Suggest concrete things they can do, read, watch, or try next — pointing at specific exercises or references when you can.${toolHint}`;
+  }
+
+  function addToolBubble(text, isError) {
+    const msgs = document.getElementById('mp-msgs');
+    if (!msgs) return;
+    const empty = msgs.querySelector('.mp-empty');
+    if (empty) empty.remove();
+    const el = document.createElement('div');
+    el.className = 'mp-msg tool' + (isError ? ' err' : '');
+    el.textContent = text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
   }
 
   let isStreaming = false;
@@ -280,6 +299,124 @@ Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socrat
     if (openDrawerAfterKey) { openDrawerAfterKey = false; openDrawer(); }
   }
 
+  function buildApiTools() {
+    if (!toolConfig) return undefined;
+    const arr = [];
+    for (const name of Object.keys(toolConfig)) {
+      const t = toolConfig[name];
+      arr.push({
+        name,
+        description: t.description || '',
+        input_schema: t.input_schema || { type: 'object', properties: {} },
+      });
+    }
+    return arr.length ? arr : undefined;
+  }
+
+  // Run ONE turn (request -> stream parse). Returns { content: [...blocks], stop_reason }.
+  // Each text_delta updates `bubble`; we create new bubbles for additional text blocks.
+  async function streamOneTurn(messagesForApi, system, key, msgsEl) {
+    const apiTools = buildApiTools();
+    const body = {
+      model: MODEL,
+      max_tokens: 4096,
+      stream: true,
+      system,
+      messages: messagesForApi,
+    };
+    if (apiTools) body.tools = apiTools;
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok || !res.body) {
+      const errText = await res.text().catch(() => '');
+      let msg = `${res.status} ${res.statusText}`;
+      try {
+        const j = JSON.parse(errText);
+        if (j.error && j.error.message) msg = j.error.message;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+
+    const blocks = []; // accumulated content blocks
+    const blockInputJson = new Map(); // index -> partial json string for tool_use
+    let stopReason = null;
+    let currentBubble = null;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (!data) continue;
+        let evt;
+        try { evt = JSON.parse(data); } catch (e) { continue; }
+
+        if (evt.type === 'content_block_start') {
+          const cb = evt.content_block || {};
+          if (cb.type === 'text') {
+            blocks[evt.index] = { type: 'text', text: '' };
+            currentBubble = document.createElement('div');
+            currentBubble.className = 'mp-msg assistant mp-typing';
+            currentBubble.textContent = '';
+            msgsEl.appendChild(currentBubble);
+            msgsEl.scrollTop = msgsEl.scrollHeight;
+          } else if (cb.type === 'tool_use') {
+            blocks[evt.index] = { type: 'tool_use', id: cb.id, name: cb.name, input: {} };
+            blockInputJson.set(evt.index, '');
+            currentBubble = null;
+          }
+        } else if (evt.type === 'content_block_delta') {
+          const d = evt.delta || {};
+          if (d.type === 'text_delta') {
+            const b = blocks[evt.index];
+            if (b && b.type === 'text') {
+              b.text += d.text;
+              if (currentBubble) {
+                currentBubble.textContent = b.text;
+                msgsEl.scrollTop = msgsEl.scrollHeight;
+              }
+            }
+          } else if (d.type === 'input_json_delta') {
+            const prev = blockInputJson.get(evt.index) || '';
+            blockInputJson.set(evt.index, prev + (d.partial_json || ''));
+          }
+        } else if (evt.type === 'content_block_stop') {
+          const b = blocks[evt.index];
+          if (b && b.type === 'tool_use') {
+            const raw = blockInputJson.get(evt.index) || '';
+            try { b.input = raw ? JSON.parse(raw) : {}; } catch (e) { b.input = {}; }
+          }
+          if (currentBubble) {
+            currentBubble.classList.remove('mp-typing');
+            currentBubble = null;
+          }
+        } else if (evt.type === 'message_delta') {
+          if (evt.delta && evt.delta.stop_reason) stopReason = evt.delta.stop_reason;
+        }
+      }
+    }
+    // strip undefined slots if any
+    const cleanBlocks = blocks.filter(Boolean);
+    return { content: cleanBlocks, stop_reason: stopReason };
+  }
+
   async function send() {
     if (isStreaming) return;
     const input = document.getElementById('mp-input');
@@ -301,13 +438,7 @@ Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socrat
     sendBtn.disabled = true;
 
     const msgs = document.getElementById('mp-msgs');
-    const bubble = document.createElement('div');
-    bubble.className = 'mp-msg assistant mp-typing';
-    bubble.textContent = '';
-    msgs.appendChild(bubble);
-    msgs.scrollTop = msgs.scrollHeight;
 
-    let accumulated = '';
     try {
       const topic = getTopicData();
       const system = [{
@@ -316,65 +447,77 @@ Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socrat
         cache_control: { type: 'ephemeral' },
       }];
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 4096,
-          stream: true,
-          system,
-          messages: chat,
-        }),
-      });
+      // Build per-API messages array (separate from persisted chat).
+      const apiMessages = chat.map(m => ({ role: m.role, content: m.content }));
 
-      if (!res.ok || !res.body) {
-        const errText = await res.text().catch(() => '');
-        let msg = `${res.status} ${res.statusText}`;
-        try {
-          const j = JSON.parse(errText);
-          if (j.error && j.error.message) msg = j.error.message;
-        } catch (e) {}
-        throw new Error(msg);
-      }
+      let finalText = '';
+      const MAX_ITER = 10;
+      let iter = 0;
+      while (iter++ < MAX_ITER) {
+        const turn = await streamOneTurn(apiMessages, system, key, msgs);
+        // Append assistant content to API messages
+        apiMessages.push({ role: 'assistant', content: turn.content });
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6).trim();
-          if (!data) continue;
-          try {
-            const evt = JSON.parse(data);
-            if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') {
-              accumulated += evt.delta.text;
-              bubble.textContent = accumulated;
-              msgs.scrollTop = msgs.scrollHeight;
-            }
-          } catch (e) {}
+        // Collect final visible text (the last text block of this turn)
+        for (const b of turn.content) {
+          if (b.type === 'text') finalText = (finalText ? finalText + '\n\n' : '') + b.text;
         }
+
+        if (turn.stop_reason !== 'tool_use') break;
+
+        // Execute every tool_use block, send the results back as a user turn
+        const toolResults = [];
+        for (const b of turn.content) {
+          if (b.type !== 'tool_use') continue;
+          const t = toolConfig && toolConfig[b.name];
+          let result;
+          let errored = false;
+          if (!t || typeof t.handler !== 'function') {
+            result = { error: 'Unknown tool: ' + b.name };
+            errored = true;
+            addToolBubble('⚠ unknown tool: ' + b.name, true);
+          } else {
+            try {
+              const out = await t.handler(b.input || {});
+              result = (out === undefined || out === null) ? { ok: true } : out;
+              const summary = (typeof result === 'object' && result.summary)
+                ? result.summary
+                : (typeof result === 'object' && result.error)
+                  ? '⚠ ' + result.error
+                  : `✓ ${b.name}`;
+              if (typeof result === 'object' && result.error) {
+                addToolBubble(summary, true);
+                errored = true;
+              } else {
+                addToolBubble(summary, false);
+              }
+            } catch (err) {
+              result = { error: String(err && err.message || err) };
+              errored = true;
+              addToolBubble('⚠ ' + b.name + ' failed: ' + result.error, true);
+            }
+          }
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: b.id,
+            content: typeof result === 'string' ? result : JSON.stringify(result),
+            is_error: errored,
+          });
+        }
+        apiMessages.push({ role: 'user', content: toolResults });
+        // continue loop — Claude will see the results and likely produce a final text block
       }
 
-      bubble.classList.remove('mp-typing');
-      if (!accumulated) accumulated = '(no response)';
-      chat.push({ role: 'assistant', content: accumulated });
-      saveChat(chat);
+      // Persist the final visible text only (tool rounds are not stored)
+      if (finalText) {
+        chat.push({ role: 'assistant', content: finalText });
+        saveChat(chat);
+      }
     } catch (e) {
-      bubble.classList.remove('mp-typing');
-      bubble.classList.add('err');
+      const bubble = document.createElement('div');
+      bubble.className = 'mp-msg assistant err';
       bubble.textContent = '⚠ ' + (e && e.message ? e.message : 'Something went wrong.');
+      msgs.appendChild(bubble);
       // pop the failed user turn so retry-history doesn't drift
       const ch = loadChat();
       if (ch.length && ch[ch.length - 1].role === 'user') {
@@ -424,6 +567,7 @@ Style: concise (typically 2-4 short paragraphs), warm but not saccharine, Socrat
     init(opts) {
       theme = (opts && opts.theme) || 'paper';
       getNavContext = (opts && opts.getNavContext) || (() => null);
+      toolConfig = (opts && opts.tools) || null;
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => { injectStyles(); injectUI(); attach(); });
       } else {
