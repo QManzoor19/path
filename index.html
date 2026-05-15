@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyPath — pick a look</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f4f4f5;
+    color: #18181b;
+    min-height: 100vh;
+    padding: 60px 24px 80px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  header { margin-bottom: 36px; }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(36px, 5vw, 52px);
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+  .sub {
+    color: #71717a;
+    font-size: 16px;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+  .sub b { color: #18181b; font-weight: 600; }
+
+  .progress-pill {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #52525b;
+    background: white;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #e4e4e7;
+  }
+  .progress-pill b { color: #18181b; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  a.variant {
+    text-decoration: none;
+    color: inherit;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e4e4e7;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  a.variant:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-color: #d4d4d8;
+  }
+
+  .preview {
+    height: 160px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* paper preview */
+  .preview.paper {
+    background: #f5efe6;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(194,83,42,0.08), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(92,138,58,0.08), transparent 50%);
+  }
+  .preview.paper .ptitle {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    color: #2a2520;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .preview.paper .ptitle span { color: #c2532a; }
+
+  /* mono preview */
+  .preview.mono {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .preview.mono .pheader {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: #6b7280;
+  }
+  .preview.mono .pname {
+    font-size: 24px;
+    font-weight: 600;
+    color: #0a0a0a;
+  }
+  .preview.mono .pbar {
+    width: 120px;
+    height: 2px;
+    background: #e5e7eb;
+    position: relative;
+  }
+  .preview.mono .pbar::after {
+    content: '';
+    position: absolute;
+    inset: 0 60% 0 0;
+    background: #0a0a0a;
+  }
+
+  /* dark preview */
+  .preview.dark {
+    background: #0d0e14;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(167,139,250,0.18), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(167,139,250,0.08), transparent 50%);
+    color: #e4e4e7;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .preview.dark .pname {
+    font-size: 26px;
+    font-weight: 600;
+    color: #e4e4e7;
+    text-shadow: 0 0 16px rgba(167,139,250,0.4);
+  }
+  .preview.dark .pbar {
+    width: 140px;
+    height: 4px;
+    border-radius: 999px;
+    background: #1c1f2a;
+    position: relative;
+    overflow: hidden;
+  }
+  .preview.dark .pbar::after {
+    content: '';
+    position: absolute;
+    inset: 0 35% 0 0;
+    background: #a78bfa;
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(167,139,250,0.6);
+  }
+
+  /* playful preview */
+  .preview.playful {
+    background: #fef9f3;
+  }
+  .preview.playful .pcard {
+    width: 92px;
+    height: 92px;
+    border-radius: 22px;
+    background: #ffd6a5;
+    box-shadow: 5px 5px 0 #e8a55c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    transform: rotate(-4deg);
+  }
+  .preview.playful .pcard.b {
+    background: #a0c4ff;
+    box-shadow: 5px 5px 0 #6e9ee0;
+    transform: rotate(4deg) translateX(-6px);
+    margin-left: -20px;
+  }
+
+  .meta {
+    padding: 18px 20px 20px;
+    border-top: 1px solid #f4f4f5;
+  }
+  .vname {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .vdesc {
+    font-size: 13px;
+    color: #71717a;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .vtags {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 11px;
+    color: #71717a;
+    background: #f4f4f5;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+
+  footer.note {
+    margin-top: 40px;
+    color: #a1a1aa;
+    font-size: 13px;
+    max-width: 600px;
+    line-height: 1.6;
+  }
+  footer.note code {
+    background: #e4e4e7;
+    color: #3f3f46;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>MyPath</h1>
+    <p class="sub">Four looks for the same app. Pick whichever feels right — <b>your topics, notes, and progress are shared across all of them</b>, so you can switch any time.</p>
+    <div class="progress-pill" id="pill">loading…</div>
+  </header>
+
+  <div class="grid">
+
+    <a class="variant" href="mono.html">
+      <div class="preview mono">
+        <div class="pheader">SUBJECTS</div>
+        <div class="pname">MyPath</div>
+        <div class="pbar"></div>
+      </div>
+      <div class="meta">
+        <h2 class="vname">Mono</h2>
+        <p class="vdesc">Hairline borders, no curves, no warmth. Feels like Linear or Notion. For when you want a tool, not a journal.</p>
+        <div class="vtags"><span class="tag">minimal</span><span class="tag">sans-serif</span><span class="tag">white</span></div>
+      </div>
+    </a>
+
+    <a class="variant" href="dark.html">
+      <div class="preview dark">
+        <div class="pname">MyPath</div>
+        <div class="pbar"></div>
+      </div>
+      <div class="meta">
+        <h2 class="vname">Dark</h2>
+        <p class="vdesc">Deep slate with a violet glow. The 2am study room — calm, focused, slightly moody.</p>
+        <div class="vtags"><span class="tag">dark</span><span class="tag">violet</span><span class="tag">glow</span></div>
+      </div>
+    </a>
+
+    <a class="variant" href="playful.html">
+      <div class="preview playful">
+        <div class="pcard">🧠</div>
+        <div class="pcard b">🎸</div>
+      </div>
+      <div class="meta">
+        <h2 class="vname">Playful</h2>
+        <p class="vdesc">Chunky pastel cards with sticker shadows, bouncy checkboxes, friendly microcopy. Duolingo energy.</p>
+        <div class="vtags"><span class="tag">pastel</span><span class="tag">chunky</span><span class="tag">cheerful</span></div>
+      </div>
+    </a>
+
+    <a class="variant" href="paper.html">
+      <div class="preview paper">
+        <div class="ptitle">LearnPath<span>.</span></div>
+      </div>
+      <div class="meta">
+        <h2 class="vname">Paper</h2>
+        <p class="vdesc">Warm cream + serif headlines. Quiet, literary, bookshelf-like. The original — kept for comparison.</p>
+        <div class="vtags"><span class="tag">serif</span><span class="tag">cream</span><span class="tag">quiet</span></div>
+      </div>
+    </a>
+
+  </div>
+
+  <footer class="note">
+    All four variants share the same data via <code>localStorage</code>. Tick a topic in one, refresh the others — it's there. Use <b>export</b> in any variant's footer to back up your topics, notes, and resources.
+  </footer>
+
+</div>
+
+<script>
+  // Show current progress so the chooser feels alive
+  try {
+    const raw = localStorage.getItem('learnpath:v1');
+    const pill = document.getElementById('pill');
+    if (!raw) {
+      pill.innerHTML = 'fresh start — <b>nothing learned yet</b>';
+    } else {
+      const s = JSON.parse(raw);
+      let total = 0, done = 0;
+      for (const kind of ['subject','skill']) {
+        for (const d of (s[kind] || [])) {
+          for (const t of (d.topics || [])) {
+            total++;
+            if (t.done) done++;
+          }
+        }
+      }
+      pill.innerHTML = `<b>${done}</b> / ${total} learned so far`;
+    }
+  } catch (e) {
+    document.getElementById('pill').textContent = '';
+  }
+</script>
+</body>
+</html>

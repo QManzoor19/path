@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyPath — quiet hours of learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e14;
+    --bg-elev: #14161f;
+    --bg-elev-2: #1c1f2a;
+    --bg-inset: #0f1118;
+    --border: #2a2d3a;
+    --border-strong: #353949;
+    --text: #e4e4e7;
+    --text-soft: #a1a1aa;
+    --text-mute: #71717a;
+    --accent: #a78bfa;
+    --accent-soft: rgba(167, 139, 250, 0.15);
+    --accent-glow: rgba(167, 139, 250, 0.35);
+    --cf-empty: #1c1f2a;
+    --cf-on: #a78bfa;
+    --cf-hover: rgba(167, 139, 250, 0.6);
+    --done: #5eead4;
+    --done-glow: rgba(94, 234, 212, 0.3);
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 10% 0%, rgba(124, 58, 237, 0.10), transparent 60%),
+      radial-gradient(ellipse 70% 55% at 95% 100%, rgba(91, 33, 182, 0.12), transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(30, 27, 75, 0.15), transparent 70%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 44px 20px 80px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: #20232f;
+    border: 3px solid var(--bg);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #2c3040; }
+  * { scrollbar-color: #20232f var(--bg); scrollbar-width: thin; }
+
+  /* selection */
+  ::selection { background: var(--accent-soft); color: var(--text); }
+
+  /* header */
+  header.app-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 38px;
+    flex-wrap: wrap;
+  }
+  .brand h1 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: clamp(34px, 5vw, 46px);
+    margin: 0;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    text-shadow: 0 0 24px rgba(167, 139, 250, 0.22);
+    line-height: 1;
+  }
+  .brand h1 .dot {
+    color: var(--accent);
+    text-shadow: 0 0 18px var(--accent-glow);
+  }
+  .tagline {
+    color: var(--text-soft);
+    font-size: 14px;
+    margin-top: 10px;
+    letter-spacing: 0.005em;
+  }
+  .overall {
+    font-size: 13px;
+    color: var(--text-soft);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .overall b {
+    color: var(--accent);
+    font-weight: 600;
+    text-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* section header */
+  .section { margin-top: 40px; }
+  .section:first-child { margin-top: 0; }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .section-head h2 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-weight: 600;
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-head h2 .section-emoji {
+    font-size: 16px;
+    opacity: 0.9;
+  }
+  .section-head .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+  }
+  .section-head .count {
+    font-size: 12px;
+    color: var(--text-mute);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  /* grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: linear-gradient(180deg, #181a25 0%, #14161f 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px 18px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), transparent 30%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 10px 30px rgba(167, 139, 250, 0.15);
+  }
+  .card.done {
+    border-color: rgba(94, 234, 212, 0.3);
+  }
+  .card .emoji {
+    font-size: 26px;
+    line-height: 1;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  }
+  .card .name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  .card .meta {
+    font-size: 12px;
+    color: var(--text-mute);
+    margin-bottom: 14px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .bar {
+    height: 4px;
+    background: var(--bg-inset);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    box-shadow: 0 0 8px var(--accent-glow);
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .card.done .bar > span {
+    background: var(--done);
+    box-shadow: 0 0 8px var(--done-glow);
+  }
+  .card .del {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    color: var(--text-mute);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    border-radius: 8px;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card:hover .del { opacity: 1; }
+  .card .del:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--danger);
+  }
+
+  /* add card */
+  .add-card {
+    background: transparent;
+    border: 1px dashed var(--border-strong);
+    border-radius: 14px;
+    padding: 18px;
+    color: var(--text-mute);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    min-height: 140px;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.2s;
+    letter-spacing: 0.01em;
+  }
+  .add-card:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(167, 139, 250, 0.04);
+    transform: translateY(-2px);
+  }
+  .add-card .plus { font-size: 22px; line-height: 1; font-weight: 300; }
+
+  /* views */
+  .detail { display: none; }
+  .detail.active { display: block; }
+  .home.hidden { display: none; }
+
+  .back {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 7px 14px;
+    margin-bottom: 24px;
+    font-family: inherit;
+    border-radius: 8px;
+    transition: all 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .back:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .detail-head .demoji {
+    font-size: 42px;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+  }
+  .detail-head h2 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.15);
+  }
+  .detail-progress {
+    color: var(--text-soft);
+    font-size: 13px;
+    margin-bottom: 26px;
+    letter-spacing: 0.01em;
+  }
+  .detail-bar {
+    height: 4px;
+    background: var(--bg-inset);
+    border-radius: 999px;
+    overflow: hidden;
+    max-width: 380px;
+    margin-top: 10px;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .detail-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    box-shadow: 0 0 8px var(--accent-glow);
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .topics {
+    list-style: none;
+    padding: 0;
+    margin: 22px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .topic-section {
+    list-style: none;
+    padding: 0 0 8px;
+    margin: 26px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    text-shadow: 0 0 14px var(--accent-soft);
+  }
+  .topic-section:first-child { margin-top: 0; }
+  .topic-section .era-time {
+    color: var(--text-mute);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-size: 11px;
+    text-shadow: none;
+  }
+  .topic {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .topic:hover {
+    border-color: var(--accent);
+    background: #171927;
+    box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.25);
+  }
+  .topic .check {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: var(--bg-inset);
+  }
+  .topic .check:hover { border-color: var(--accent); }
+  .topic.done .check {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .topic.done .check::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    border-right: 2px solid #0d0e14;
+    border-bottom: 2px solid #0d0e14;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+  .topic .label {
+    flex: 1;
+    font-size: 14.5px;
+    color: var(--text);
+    transition: color 0.15s;
+    letter-spacing: -0.002em;
+  }
+  .topic.done .label {
+    color: var(--text-mute);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--text-mute);
+  }
+  .topic .resource-count {
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .topic .chev {
+    color: var(--text-mute);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s, color 0.15s;
+  }
+  .topic:hover .chev { opacity: 1; transform: translateX(2px); color: var(--accent); }
+  .topic .remove {
+    border: none;
+    background: transparent;
+    color: var(--text-mute);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    font-size: 16px;
+    line-height: 1;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  .topic:hover .remove { opacity: 1; }
+  .topic .remove:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--danger);
+  }
+
+  .add-topic {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .add-topic input {
+    flex: 1;
+    padding: 13px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-elev);
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .add-topic input::placeholder { color: var(--text-mute); }
+  .add-topic input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .add-topic button {
+    padding: 0 22px;
+    background: var(--accent);
+    color: #0d0e14;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .add-topic button:hover {
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+
+  /* topic page */
+  .topic-page { display: none; }
+  .topic-page.active { display: block; }
+
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--text-mute);
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+  }
+  .breadcrumb a {
+    color: var(--text-mute);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.5; }
+
+  .topic-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .topic-title-row .big-check {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.2s;
+    background: var(--bg-inset);
+  }
+  .topic-title-row .big-check:hover { border-color: var(--accent); }
+  .topic-title-row .big-check.done {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .topic-title-row .big-check.done::after {
+    content: '';
+    width: 7px;
+    height: 12px;
+    border-right: 2.5px solid #0d0e14;
+    border-bottom: 2.5px solid #0d0e14;
+    transform: rotate(45deg) translate(-1px, -2px);
+  }
+  .topic-title-row h2 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    color: var(--text);
+    text-shadow: 0 0 18px rgba(167, 139, 250, 0.12);
+  }
+  .topic-status {
+    font-size: 12px;
+    color: var(--text-mute);
+    margin-top: 6px;
+    letter-spacing: 0.01em;
+  }
+  .topic-status.done {
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .panel {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .panel > * { position: relative; }
+  .panel h3 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .panel h3 .pcount {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  .notes-area {
+    width: 100%;
+    min-height: 160px;
+    border: 1px solid var(--border);
+    background: var(--bg-inset);
+    font-family: inherit;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+    padding: 14px 16px;
+    border-radius: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .notes-area::placeholder { color: var(--text-mute); }
+  .notes-area:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .notes-saved {
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .notes-saved.show { opacity: 1; }
+  .notes-saved::before {
+    content: '●';
+    margin-right: 6px;
+    text-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .resources {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .resource {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-inset);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .resource:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.2);
+  }
+  .resource .rtype {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    filter: drop-shadow(0 0 6px var(--accent-glow));
+  }
+  .resource .rbody { flex: 1; min-width: 0; }
+  .resource .rtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+  .resource .rtitle:hover { color: var(--accent); }
+  .resource .rurl {
+    font-size: 12px;
+    color: var(--text-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+    letter-spacing: 0.005em;
+  }
+  .resource .rdel {
+    border: none;
+    background: transparent;
+    color: var(--text-mute);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    opacity: 0;
+    font-size: 16px;
+    line-height: 1;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  .resource:hover .rdel { opacity: 1; }
+  .resource .rdel:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--danger);
+  }
+  .resources-empty {
+    font-size: 13px;
+    color: var(--text-mute);
+    padding: 6px 0 16px;
+    letter-spacing: 0.01em;
+  }
+
+  .add-resource {
+    display: grid;
+    grid-template-columns: auto 1fr 2fr auto;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .add-resource select,
+  .add-resource input {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-inset);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    min-width: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .add-resource input::placeholder { color: var(--text-mute); }
+  .add-resource input:focus,
+  .add-resource select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .add-resource select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23a1a1aa' d='M0 0l5 6 5-6z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .add-resource button {
+    padding: 0 16px;
+    background: var(--accent);
+    color: #0d0e14;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: box-shadow 0.15s;
+  }
+  .add-resource button:hover { box-shadow: 0 0 14px var(--accent-glow); }
+
+  @media (max-width: 600px) {
+    .add-resource { grid-template-columns: 1fr 1fr; }
+    .add-resource button { grid-column: span 2; padding: 10px; }
+  }
+
+  /* modal */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 6, 10, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal-bg.active { display: flex; animation: modalFade 0.2s ease; }
+  @keyframes modalFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .modal {
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(167, 139, 250, 0.08),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    animation: modalRise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes modalRise {
+    from { transform: translateY(8px) scale(0.98); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .modal h3 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.015em;
+  }
+  .modal p {
+    color: var(--text-soft);
+    margin: 0 0 20px;
+    font-size: 13.5px;
+    letter-spacing: 0.005em;
+  }
+  .modal label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .modal input, .modal select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--bg-inset);
+    color: var(--text);
+    margin-bottom: 18px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .modal input::placeholder { color: var(--text-mute); }
+  .modal input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .modal .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .modal button {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0e14;
+    font-weight: 600;
+  }
+  .btn-primary:hover { box-shadow: 0 0 18px var(--accent-glow); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-bottom: 18px;
+    padding: 6px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .emoji-grid button {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.12s;
+    line-height: 1;
+  }
+  .emoji-grid button:hover {
+    background: rgba(167, 139, 250, 0.08);
+    transform: scale(1.1);
+  }
+  .emoji-grid button.selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  footer.app-footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-mute);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  footer.app-footer button {
+    background: transparent;
+    border: none;
+    color: var(--text-mute);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  footer.app-footer button:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  footer.app-footer .dotsep {
+    margin: 0 8px;
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <div class="brand">
+      <h1>MyPath<span class="dot">.</span></h1>
+      <div class="tagline">Quiet hours of learning. One thing at a time.</div>
+    </div>
+    <div class="overall" id="overall">— learned</div>
+  </header>
+
+  <!-- HOME VIEW -->
+  <div class="home" id="home">
+    <div class="section" data-kind="subject">
+      <div class="section-head">
+        <h2><span class="section-emoji">📚</span>Subjects</h2>
+        <span class="line"></span>
+        <span class="count" id="count-subject"></span>
+      </div>
+      <div class="grid" id="grid-subject"></div>
+    </div>
+
+    <div class="section" data-kind="skill">
+      <div class="section-head">
+        <h2><span class="section-emoji">🎨</span>Skills</h2>
+        <span class="line"></span>
+        <span class="count" id="count-skill"></span>
+      </div>
+      <div class="grid" id="grid-skill"></div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div class="detail" id="detail">
+    <button class="back" id="back">← back to all</button>
+    <div class="detail-head">
+      <span class="demoji" id="d-emoji"></span>
+      <h2 id="d-name"></h2>
+    </div>
+    <div class="detail-progress">
+      <span id="d-progress"></span>
+      <div class="detail-bar"><span id="d-bar"></span></div>
+    </div>
+    <ul class="topics" id="topics"></ul>
+    <div class="add-topic">
+      <input id="new-topic" type="text" placeholder="Add something you want to learn..." />
+      <button id="add-topic-btn">Add</button>
+    </div>
+  </div>
+
+  <!-- TOPIC PAGE -->
+  <div class="topic-page" id="topic-page">
+    <button class="back" id="topic-back">← back to domain</button>
+    <div class="breadcrumb" id="topic-crumb"></div>
+    <div class="topic-title-row">
+      <div style="flex:1; min-width: 0;">
+        <h2 id="topic-name"></h2>
+        <div class="topic-status" id="topic-status"></div>
+      </div>
+    </div>
+    <div class="panel" id="topic-comfort-panel">
+      <h3>⚡ Comfort</h3>
+      <div id="topic-comfort"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Notes</h3>
+      <textarea class="notes-area" id="topic-notes" placeholder="Jot down what you're learning, key ideas, questions, anything..."></textarea>
+      <div class="notes-saved" id="notes-saved">saved</div>
+    </div>
+
+    <div class="panel">
+      <h3>Resources <span class="pcount" id="rcount"></span></h3>
+      <ul class="resources" id="resources-list"></ul>
+      <div class="resources-empty" id="resources-empty">No resources yet — add articles, videos, books, courses below.</div>
+      <div class="add-resource">
+        <select id="r-type">
+          <option value="link">🔗 Link</option>
+          <option value="article">📄 Article</option>
+          <option value="video">📺 Video</option>
+          <option value="book">📘 Book</option>
+          <option value="course">🎓 Course</option>
+          <option value="podcast">🎙️ Podcast</option>
+          <option value="note">💡 Note</option>
+        </select>
+        <input id="r-title" type="text" placeholder="Title" />
+        <input id="r-url" type="text" placeholder="URL (optional for notes)" />
+        <button id="r-add">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <button id="export-btn">export</button><span class="dotsep">·</span>
+    <button id="import-btn">import</button><span class="dotsep">·</span>
+    <button id="reset-btn">reset all</button>
+  </footer>
+</div>
+
+<!-- ADD DOMAIN MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">New domain</h3>
+    <p id="modal-sub"></p>
+    <label>Name</label>
+    <input type="text" id="modal-name" placeholder="e.g. Astronomy, Pottery..." />
+    <label>Pick an icon</label>
+    <div class="emoji-grid" id="emoji-grid"></div>
+    <div class="actions">
+      <button class="btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn-primary" id="modal-save">Add</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" style="display:none" />
+
+<script src="comfort.js"></script>
+<script src="history-curriculum.js"></script>
+
+<script>
+/* ---------- starter content ---------- */
+const STARTER = {
+  subject: [
+    { id: 's_history', emoji: '🏛️', name: 'History', topics: [
+      'Ancient Mesopotamia & Egypt', 'Greek city-states', 'Roman Republic & Empire',
+      'Islamic Golden Age', 'Mongol Empire', 'Medieval Europe',
+      'Renaissance', 'Age of Exploration', 'French Revolution',
+      'Industrial Revolution', 'World War I', 'World War II',
+      'Cold War', 'Decolonization'
+    ]},
+    { id: 's_psych', emoji: '🧠', name: 'Psychology', topics: [
+      'Classical & operant conditioning', 'Attachment theory', 'Cognitive biases',
+      'Memory & forgetting', 'Big Five personality', 'Maslow’s hierarchy',
+      'Defense mechanisms', 'CBT basics', 'Developmental stages (Piaget)',
+      'Social conformity (Asch, Milgram)', 'Stress & coping', 'Positive psychology'
+    ]},
+    { id: 's_econ', emoji: '📈', name: 'Economics', topics: [
+      'Supply & demand', 'Elasticity', 'Opportunity cost',
+      'Market structures', 'GDP & growth', 'Inflation & deflation',
+      'Monetary policy', 'Fiscal policy', 'Comparative advantage',
+      'Game theory basics', 'Behavioral economics', 'Externalities'
+    ]},
+    { id: 's_phil', emoji: '🪶', name: 'Philosophy', topics: [
+      'Socratic method', 'Plato’s forms', 'Aristotelian ethics',
+      'Stoicism', 'Cartesian doubt', 'Empiricism vs rationalism',
+      'Kantian ethics', 'Utilitarianism', 'Existentialism'
+    ]},
+    { id: 's_sci', emoji: '🔬', name: 'Science', topics: [
+      'Scientific method', 'Atoms & elements', 'Cell biology basics',
+      'Evolution by natural selection', 'Newton’s laws', 'Thermodynamics',
+      'Electromagnetism', 'Plate tectonics', 'DNA & genetics',
+      'Quantum basics', 'Big Bang & cosmology'
+    ]}
+  ],
+  skill: [
+    { id: 'k_guitar', emoji: '🎸', name: 'Guitar', topics: [
+      'Tune by ear', 'Open chords (C, G, D, Em, Am)', 'Smooth chord transitions',
+      'Basic strumming patterns', 'Power chords', 'Barre chords',
+      'Fingerpicking patterns', 'Pentatonic scale', 'Play a full song start to end'
+    ]},
+    { id: 'k_cook', emoji: '🍳', name: 'Cooking', topics: [
+      'Knife skills (dice, julienne)', 'Cook rice perfectly', 'Boil & poach eggs',
+      'Make a pan sauce', 'Roast a whole vegetable', 'Sear protein properly',
+      'Bake bread from scratch', 'Make pasta from scratch', 'Build a stir-fry without a recipe',
+      'Season to taste confidently'
+    ]},
+    { id: 'k_garden', emoji: '🌱', name: 'Gardening', topics: [
+      'Identify my climate zone', 'Test & improve soil', 'Start seeds indoors',
+      'Transplant seedlings', 'Companion planting', 'Watering schedules',
+      'Compost setup', 'Prune properly', 'Save seeds for next season'
+    ]},
+    { id: 'k_draw', emoji: '✏️', name: 'Drawing', topics: [
+      'Confident line work', 'Basic shapes & forms', 'Perspective (1, 2, 3 point)',
+      'Light & shadow', 'Figure proportions', 'Faces & expressions',
+      'Hands & feet', 'Gesture drawing', 'Color theory'
+    ]},
+    { id: 'k_write', emoji: '✍️', name: 'Writing', topics: [
+      'Daily writing habit', 'Sharp sentences', 'Strong openings',
+      'Structuring an essay', 'Show don’t tell', 'Editing ruthlessly',
+      'Finding a voice', 'Finish a short story', 'Publish something publicly'
+    ]}
+  ]
+};
+
+const EMOJIS = ['📚','🧠','📈','🏛️','🪶','🔬','🌍','🧪','💻','📐','🎼','🎨','🎸','🎹','🥁','🎤','🍳','🍞','☕','🍷','🌱','🌿','🌸','🌳','✏️','🖌️','📷','🎬','✍️','📖','💃','🧘','🏃','🚴','⛰️','🏊','🧵','🧶','🪡','🔨','⚙️','🛠️','♟️','🎮','🃏','🧩','💡','✨','⭐','🔥','💎','🗺️','🧭','📅','💰','🌟','🦋','🐢','🐉','🦅'];
+
+/* ---------- state ---------- */
+const KEY = 'learnpath:v1';
+let state = load();
+
+function load() {
+  let s;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      s = JSON.parse(raw);
+      if (!s || !s.subject || !s.skill) s = seed();
+    } else {
+      s = seed();
+    }
+  } catch (e) { s = seed(); }
+  migrate(s);
+  return s;
+}
+function migrate(s) {
+  for (const kind of ['subject','skill']) {
+    for (const d of s[kind]) {
+      for (const t of d.topics) {
+        if (t.notes === undefined) t.notes = '';
+        if (!Array.isArray(t.resources)) t.resources = [];
+      }
+    }
+  }
+  if (window.MyPathComfort) MyPathComfort.migrate(s);
+  if (window.MyPathHistory) MyPathHistory.apply(s);
+}
+function seed() {
+  const s = { subject: [], skill: [] };
+  for (const kind of ['subject','skill']) {
+    for (const d of STARTER[kind]) {
+      s[kind].push({
+        id: d.id,
+        emoji: d.emoji,
+        name: d.name,
+        topics: d.topics.map((t,i) => ({ id: d.id + '_t' + i, label: t, done: false, comfort: 0, notes: '', resources: [] }))
+      });
+    }
+  }
+  return s;
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* ---------- rendering ---------- */
+let currentDomain = null;
+
+function render() {
+  renderGrid('subject');
+  renderGrid('skill');
+  renderOverall();
+}
+
+function renderGrid(kind) {
+  const grid = document.getElementById('grid-' + kind);
+  grid.innerHTML = '';
+  const domains = state[kind];
+  let totalTopics = 0, totalMastered = 0;
+  for (const d of domains) {
+    const t = d.topics.length;
+    const mastered = d.topics.filter(x => (x.comfort || 0) >= 10).length;
+    const avgC = t === 0 ? 0 : d.topics.reduce((s,x) => s + (x.comfort||0), 0) / t;
+    totalTopics += t; totalMastered += mastered;
+    const pct = Math.round(avgC * 10);
+    const card = document.createElement('div');
+    card.className = 'card' + (t > 0 && mastered === t ? ' done' : '');
+    card.dataset.id = d.id;
+    card.dataset.kind = kind;
+    card.innerHTML = `
+      <button class="del" title="Remove">×</button>
+      <div class="emoji">${d.emoji}</div>
+      <div class="name">${escapeHtml(d.name)}</div>
+      <div class="meta">${t === 0 ? 'no topics yet' : `avg ${avgC.toFixed(1)} / 10 · ${t} ${t === 1 ? 'topic' : 'topics'}`}</div>
+      <div class="bar"><span style="width:${pct}%"></span></div>
+    `;
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('del')) return;
+      openDetail(kind, d.id);
+    });
+    card.querySelector('.del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Remove "${d.name}" and all its topics?`)) {
+        state[kind] = state[kind].filter(x => x.id !== d.id);
+        save(); render();
+      }
+    });
+    grid.appendChild(card);
+  }
+  const add = document.createElement('div');
+  add.className = 'add-card';
+  add.innerHTML = `<span class="plus">+</span><span>add ${kind}</span>`;
+  add.addEventListener('click', () => openModal(kind));
+  grid.appendChild(add);
+
+  document.getElementById('count-' + kind).textContent =
+    totalTopics === 0 ? '' : `${totalMastered} mastered · ${totalTopics} ${totalTopics === 1 ? 'topic' : 'topics'}`;
+}
+
+function renderOverall() {
+  let total = 0, sum = 0, mastered = 0;
+  for (const kind of ['subject','skill']) {
+    for (const d of state[kind]) {
+      for (const t of d.topics) {
+        total++;
+        sum += (t.comfort || 0);
+        if ((t.comfort || 0) >= 10) mastered++;
+      }
+    }
+  }
+  const avg = total === 0 ? 0 : sum / total;
+  document.getElementById('overall').innerHTML =
+    total === 0 ? 'nothing yet — add a topic' : `avg <b>${avg.toFixed(1)}</b> / 10 · <b>${mastered}</b> mastered`;
+}
+
+function openDetail(kind, id) {
+  const d = state[kind].find(x => x.id === id);
+  if (!d) return;
+  currentDomain = { kind, id };
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('detail').classList.add('active');
+  document.getElementById('d-emoji').textContent = d.emoji;
+  document.getElementById('d-name').textContent = d.name;
+  renderTopics();
+  window.scrollTo(0, 0);
+}
+
+function renderTopics() {
+  if (!currentDomain) return;
+  const d = state[currentDomain.kind].find(x => x.id === currentDomain.id);
+  if (!d) { closeDetail(); return; }
+  const ul = document.getElementById('topics');
+  ul.innerHTML = '';
+  let lastEra = null;
+  for (const t of d.topics) {
+    if (t.era && t.era !== lastEra) {
+      const header = document.createElement('li');
+      header.className = 'topic-section';
+      header.innerHTML = `<span class="era-name">${escapeHtml(t.era)}</span>${t.timespan ? `<span class="era-time">${escapeHtml(t.timespan)}</span>` : ''}`;
+      ul.appendChild(header);
+      lastEra = t.era;
+    }
+    const li = document.createElement('li');
+    const comfort = t.comfort || 0;
+    li.className = 'topic' + (comfort >= 10 ? ' done' : '');
+    li.dataset.tid = t.id;
+    const rcount = (t.resources && t.resources.length) || 0;
+    const hasNotes = t.notes && t.notes.trim().length > 0;
+    let badge = '';
+    if (rcount > 0) badge = `<span class="resource-count">${rcount} 🔗</span>`;
+    else if (hasNotes) badge = `<span class="resource-count">📝</span>`;
+    li.innerHTML = `
+      ${MyPathComfort.bar(comfort, 'sm')}
+      <div class="label">${escapeHtml(t.label)}</div>
+      ${badge}
+      <span class="chev">›</span>
+      <button class="remove" title="Remove topic">×</button>
+    `;
+    li.querySelector('.remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Remove "${t.label}"? Its notes and resources will be deleted too.`)) {
+        d.topics = d.topics.filter(x => x.id !== t.id);
+        save();
+        renderTopics();
+        renderOverall();
+      }
+    });
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.remove')) return;
+      if (e.target.closest('.cf-bar')) return;
+      openTopic(currentDomain.kind, currentDomain.id, t.id);
+    });
+    ul.appendChild(li);
+  }
+  MyPathComfort.attachBars(ul, (v, barEl) => {
+    const li = barEl.closest('.topic');
+    if (!li) return;
+    const topic = d.topics.find(x => x.id === li.dataset.tid);
+    if (!topic) return;
+    topic.comfort = v;
+    topic.done = v >= 10;
+    save();
+    renderTopics();
+    renderOverall();
+  });
+  const total = d.topics.length;
+  const mastered = d.topics.filter(t => (t.comfort || 0) >= 10).length;
+  const avgC = total === 0 ? 0 : d.topics.reduce((s,t) => s + (t.comfort||0), 0) / total;
+  const pct = Math.round(avgC * 10);
+  document.getElementById('d-progress').textContent =
+    total === 0 ? 'no topics yet — add some below' : `avg ${avgC.toFixed(1)} / 10 across ${total} ${total === 1 ? 'topic' : 'topics'} · ${mastered} mastered`;
+  document.getElementById('d-bar').style.width = pct + '%';
+}
+
+function closeDetail() {
+  currentDomain = null;
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('detail').classList.remove('active');
+  render();
+}
+
+/* ---------- topic page ---------- */
+let currentTopic = null;
+const R_ICONS = { link:'🔗', article:'📄', video:'📺', book:'📘', course:'🎓', podcast:'🎙️', note:'💡' };
+
+function openTopic(kind, domainId, topicId) {
+  const d = state[kind].find(x => x.id === domainId);
+  if (!d) return;
+  const t = d.topics.find(x => x.id === topicId);
+  if (!t) return;
+  currentTopic = { kind, domainId, topicId };
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('detail').classList.remove('active');
+  document.getElementById('topic-page').classList.add('active');
+  document.getElementById('topic-name').textContent = t.label;
+  document.getElementById('topic-crumb').innerHTML =
+    `<a id="crumb-home">All</a><span class="sep">›</span><a id="crumb-domain">${escapeHtml(d.emoji)} ${escapeHtml(d.name)}</a><span class="sep">›</span>${escapeHtml(t.label)}`;
+  document.getElementById('crumb-home').addEventListener('click', closeTopicAndDetail);
+  document.getElementById('crumb-domain').addEventListener('click', closeTopic);
+  document.getElementById('topic-notes').value = t.notes || '';
+  renderTopicState();
+  renderResources();
+  window.scrollTo(0, 0);
+}
+
+function renderTopicState() {
+  if (!currentTopic) return;
+  const t = getTopic();
+  if (!t) return;
+  const status = document.getElementById('topic-status');
+  const comfort = t.comfort || 0;
+  status.classList.toggle('done', comfort >= 10);
+  if (comfort >= 10) status.textContent = '✓ mastered';
+  else if (comfort === 0) status.textContent = 'not started yet — set your comfort below';
+  else if (comfort < 4) status.textContent = 'just getting started';
+  else if (comfort < 7) status.textContent = 'getting comfortable';
+  else status.textContent = 'almost there';
+  document.getElementById('topic-comfort').innerHTML = MyPathComfort.bar(comfort, 'lg');
+}
+
+function renderResources() {
+  if (!currentTopic) return;
+  const t = getTopic();
+  if (!t) return;
+  const ul = document.getElementById('resources-list');
+  const empty = document.getElementById('resources-empty');
+  ul.innerHTML = '';
+  const list = t.resources || [];
+  if (list.length === 0) {
+    empty.style.display = 'block';
+    document.getElementById('rcount').textContent = '';
+  } else {
+    empty.style.display = 'none';
+    document.getElementById('rcount').textContent = list.length;
+  }
+  for (const r of list) {
+    const li = document.createElement('li');
+    li.className = 'resource';
+    const icon = R_ICONS[r.type] || '🔗';
+    const titleHtml = r.url
+      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title || r.url)}</a>`
+      : `<span class="rtitle">${escapeHtml(r.title || '(untitled)')}</span>`;
+    li.innerHTML = `
+      <span class="rtype">${icon}</span>
+      <div class="rbody">
+        ${titleHtml}
+        ${r.url ? `<div class="rurl">${escapeHtml(r.url)}</div>` : ''}
+      </div>
+      <button class="rdel" title="Remove">×</button>
+    `;
+    li.querySelector('.rdel').addEventListener('click', () => {
+      t.resources = t.resources.filter(x => x.id !== r.id);
+      save();
+      renderResources();
+    });
+    ul.appendChild(li);
+  }
+}
+
+function getTopic() {
+  if (!currentTopic) return null;
+  const d = state[currentTopic.kind].find(x => x.id === currentTopic.domainId);
+  if (!d) return null;
+  return d.topics.find(x => x.id === currentTopic.topicId);
+}
+
+function closeTopic() {
+  if (!currentTopic) return;
+  const kind = currentTopic.kind, domainId = currentTopic.domainId;
+  currentTopic = null;
+  document.getElementById('topic-page').classList.remove('active');
+  currentDomain = { kind, id: domainId };
+  document.getElementById('detail').classList.add('active');
+  document.getElementById('home').classList.add('hidden');
+  const d = state[kind].find(x => x.id === domainId);
+  document.getElementById('d-emoji').textContent = d.emoji;
+  document.getElementById('d-name').textContent = d.name;
+  renderTopics();
+}
+
+function closeTopicAndDetail() {
+  currentTopic = null;
+  document.getElementById('topic-page').classList.remove('active');
+  closeDetail();
+}
+
+document.getElementById('topic-back').addEventListener('click', closeTopic);
+MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v) => {
+  const t = getTopic();
+  if (!t) return;
+  t.comfort = v;
+  t.done = v >= 10;
+  save();
+  renderTopicState();
+});
+
+/* notes autosave (debounced) */
+let notesTimer = null;
+document.getElementById('topic-notes').addEventListener('input', (e) => {
+  const t = getTopic();
+  if (!t) return;
+  t.notes = e.target.value;
+  if (notesTimer) clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => {
+    save();
+    const saved = document.getElementById('notes-saved');
+    saved.classList.add('show');
+    setTimeout(() => saved.classList.remove('show'), 1200);
+  }, 400);
+});
+
+/* add resource */
+function addResource() {
+  const t = getTopic();
+  if (!t) return;
+  const typeSel = document.getElementById('r-type');
+  const titleIn = document.getElementById('r-title');
+  const urlIn = document.getElementById('r-url');
+  const title = titleIn.value.trim();
+  let url = urlIn.value.trim();
+  if (!title && !url) return;
+  if (url && !/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
+    url = 'https://' + url;
+  }
+  t.resources = t.resources || [];
+  t.resources.push({
+    id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    type: typeSel.value,
+    title: title || url,
+    url: url
+  });
+  titleIn.value = '';
+  urlIn.value = '';
+  save();
+  renderResources();
+}
+document.getElementById('r-add').addEventListener('click', addResource);
+document.getElementById('r-title').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
+document.getElementById('r-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
+
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/* ---------- topic adding ---------- */
+document.getElementById('add-topic-btn').addEventListener('click', addTopic);
+document.getElementById('new-topic').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addTopic();
+});
+function addTopic() {
+  if (!currentDomain) return;
+  const input = document.getElementById('new-topic');
+  const label = input.value.trim();
+  if (!label) return;
+  const d = state[currentDomain.kind].find(x => x.id === currentDomain.id);
+  d.topics.push({ id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), label, done: false, comfort: 0, notes: '', resources: [] });
+  input.value = '';
+  save();
+  renderTopics();
+}
+
+document.getElementById('back').addEventListener('click', closeDetail);
+
+/* ---------- add domain modal ---------- */
+let modalKind = null;
+let chosenEmoji = '📚';
+
+function openModal(kind) {
+  modalKind = kind;
+  chosenEmoji = kind === 'subject' ? '📚' : '🎨';
+  document.getElementById('modal-title').textContent =
+    kind === 'subject' ? 'New subject' : 'New skill';
+  document.getElementById('modal-sub').textContent =
+    kind === 'subject' ? 'Something you want to learn about.' : 'Something you want to be able to do.';
+  document.getElementById('modal-name').value = '';
+  const eg = document.getElementById('emoji-grid');
+  eg.innerHTML = '';
+  for (const e of EMOJIS) {
+    const b = document.createElement('button');
+    b.textContent = e;
+    if (e === chosenEmoji) b.classList.add('selected');
+    b.addEventListener('click', () => {
+      chosenEmoji = e;
+      eg.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    });
+    eg.appendChild(b);
+  }
+  document.getElementById('modal-bg').classList.add('active');
+  setTimeout(() => document.getElementById('modal-name').focus(), 50);
+}
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('active');
+  modalKind = null;
+}
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-bg').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-bg') closeModal();
+});
+document.getElementById('modal-save').addEventListener('click', () => {
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name || !modalKind) return;
+  const id = (modalKind === 'subject' ? 's_' : 'k_') + Date.now();
+  state[modalKind].push({ id, emoji: chosenEmoji, name, topics: [] });
+  save();
+  closeModal();
+  render();
+  openDetail(modalKind, id);
+});
+document.getElementById('modal-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('modal-save').click();
+});
+
+/* ---------- footer actions ---------- */
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Reset everything back to the starter list? Your custom additions and progress will be lost.')) {
+    state = seed();
+    save();
+    closeDetail();
+    render();
+  }
+});
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'learnpath-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const s = JSON.parse(reader.result);
+      if (!s.subject || !s.skill) throw new Error('bad file');
+      state = s;
+      save();
+      closeDetail();
+      render();
+    } catch (err) {
+      alert('That file doesn’t look right.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------- utils ---------- */
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- init ---------- */
+render();
+</script>
+<script src="ai.js"></script>
+<script>MyPathAI.init({ theme: 'dark', getNavContext: () => currentTopic });</script>
+</body>
+</html>

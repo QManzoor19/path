@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LearnPath — everything I want to learn</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5efe6;
+    --bg-2: #ebe2d3;
+    --ink: #2a2520;
+    --ink-soft: #6b5e52;
+    --line: #d8cdb9;
+    --accent: #c2532a;
+    --accent-soft: #e8a583;
+    --done: #5c8a3a;
+    --card: #fbf6ec;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 20px rgba(60,40,20,0.06);
+    --cf-empty: #e6dcc7;
+    --cf-on: #c2532a;
+    --cf-hover: #e8a583;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(194,83,42,0.06), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(92,138,58,0.07), transparent 45%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  header.app-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 44px);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  h1 .dot { color: var(--accent); }
+  .tagline {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-top: 4px;
+  }
+  .overall {
+    font-size: 14px;
+    color: var(--ink-soft);
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    border-radius: 999px;
+  }
+  .overall b { color: var(--ink); font-weight: 700; }
+
+  /* section header */
+  .section { margin-top: 36px; }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .section-head .line {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .section-head .count {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-soft);
+  }
+  .card .emoji {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .card .name {
+    font-weight: 600;
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .card .meta {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .bar {
+    height: 6px;
+    background: var(--bg-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .card.done .bar > span { background: var(--done); }
+  .card .del {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  .card:hover .del { opacity: 1; }
+  .card .del:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+
+  /* add card */
+  .add-card {
+    background: transparent;
+    border: 1.5px dashed var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    min-height: 130px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .add-card:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(194,83,42,0.04);
+  }
+  .add-card .plus { font-size: 26px; line-height: 1; }
+
+  /* detail view */
+  .detail { display: none; }
+  .detail.active { display: block; }
+  .home.hidden { display: none; }
+
+  .back {
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .back:hover { color: var(--accent); }
+
+  .detail-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .detail-head .demoji {
+    font-size: 40px;
+  }
+  .detail-head h2 {
+    font-family: 'Fraunces', serif;
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .detail-progress {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .detail-bar {
+    height: 6px;
+    background: var(--bg-2);
+    border-radius: 999px;
+    overflow: hidden;
+    max-width: 360px;
+    margin-top: 8px;
+  }
+  .detail-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+  }
+
+  .topics {
+    list-style: none;
+    padding: 0;
+    margin: 24px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .topic-section {
+    list-style: none;
+    padding: 0;
+    margin: 22px 0 6px;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+  }
+  .topic-section:first-child { margin-top: 0; }
+  .topic-section .era-time {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .topic {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .topic:hover { border-color: var(--accent-soft); }
+  .topic .check {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .topic.done .check {
+    background: var(--done);
+    border-color: var(--done);
+  }
+  .topic.done .check::after {
+    content: '✓';
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .topic .label {
+    flex: 1;
+    font-size: 15px;
+    transition: color 0.15s;
+  }
+  .topic.done .label {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  .topic .resource-count {
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--bg-2);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .topic .chev {
+    color: var(--ink-soft);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .topic:hover .chev { opacity: 1; transform: translateX(2px); }
+  .topic .remove {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    font-size: 16px;
+  }
+  .topic:hover .remove { opacity: 1; }
+  .topic .remove:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+
+  .add-topic {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .add-topic input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-topic input:focus { border-color: var(--accent); }
+  .add-topic button {
+    padding: 0 18px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .add-topic button:hover { background: var(--accent); }
+
+  /* topic page */
+  .topic-page { display: none; }
+  .topic-page.active { display: block; }
+
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .breadcrumb a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep { margin: 0 6px; opacity: 0.5; }
+
+  .topic-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .topic-title-row .big-check {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.15s;
+  }
+  .topic-title-row .big-check:hover { border-color: var(--accent); }
+  .topic-title-row .big-check.done {
+    background: var(--done);
+    border-color: var(--done);
+  }
+  .topic-title-row .big-check.done::after {
+    content: '✓';
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .topic-title-row h2 {
+    font-family: 'Fraunces', serif;
+    margin: 0;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    flex: 1;
+  }
+  .topic-status {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .topic-status.done { color: var(--done); }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .panel h3 {
+    font-family: 'Fraunces', serif;
+    margin: 0 0 12px;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel h3 .pcount {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .notes-area {
+    width: 100%;
+    min-height: 140px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    padding: 0;
+  }
+  .notes-area::placeholder { color: var(--ink-soft); opacity: 0.7; }
+  .notes-saved {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .notes-saved.show { opacity: 1; }
+
+  .resources {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .resource {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    transition: border-color 0.15s;
+  }
+  .resource:hover { border-color: var(--accent-soft); }
+  .resource .rtype { font-size: 18px; flex-shrink: 0; }
+  .resource .rbody { flex: 1; min-width: 0; }
+  .resource .rtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resource .rtitle:hover { color: var(--accent); text-decoration: underline; }
+  .resource .rurl {
+    font-size: 12px;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resource .rdel {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    font-size: 14px;
+  }
+  .resource:hover .rdel { opacity: 1; }
+  .resource .rdel:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+  .resources-empty {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 8px 0 14px;
+  }
+
+  .add-resource {
+    display: grid;
+    grid-template-columns: auto 1fr 2fr auto;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .add-resource select,
+  .add-resource input {
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+  }
+  .add-resource input:focus,
+  .add-resource select:focus { border-color: var(--accent); }
+  .add-resource button {
+    padding: 0 14px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .add-resource button:hover { background: var(--accent); }
+  @media (max-width: 600px) {
+    .add-resource { grid-template-columns: 1fr 1fr; }
+    .add-resource button { grid-column: span 2; padding: 9px; }
+  }
+
+  /* modal */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(42, 37, 32, 0.4);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal-bg.active { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  }
+  .modal h3 {
+    font-family: 'Fraunces', serif;
+    margin: 0 0 6px;
+    font-size: 22px;
+  }
+  .modal p {
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    font-size: 14px;
+  }
+  .modal label {
+    display: block;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .modal input, .modal select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background: white;
+    margin-bottom: 14px;
+    outline: none;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal .row { display: flex; gap: 8px; }
+  .modal .row input { flex: 1; }
+  .modal .actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+  .modal button {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-secondary { background: transparent; color: var(--ink-soft); }
+  .btn-secondary:hover { color: var(--ink); }
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .emoji-grid button {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .emoji-grid button:hover, .emoji-grid button.selected {
+    background: var(--bg-2);
+    border-color: var(--accent-soft);
+  }
+
+  footer.app-footer {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  footer.app-footer button {
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  footer.app-footer button:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <div>
+      <h1>LearnPath<span class="dot">.</span></h1>
+      <div class="tagline">Everything I want to learn — one place to chip away at it.</div>
+    </div>
+    <div class="overall" id="overall">— learned</div>
+  </header>
+
+  <!-- HOME VIEW -->
+  <div class="home" id="home">
+    <div class="section" data-kind="subject">
+      <div class="section-head">
+        <h2>📚 Subjects</h2>
+        <span class="line"></span>
+        <span class="count" id="count-subject"></span>
+      </div>
+      <div class="grid" id="grid-subject"></div>
+    </div>
+
+    <div class="section" data-kind="skill">
+      <div class="section-head">
+        <h2>🎨 Skills</h2>
+        <span class="line"></span>
+        <span class="count" id="count-skill"></span>
+      </div>
+      <div class="grid" id="grid-skill"></div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div class="detail" id="detail">
+    <button class="back" id="back">← back to all</button>
+    <div class="detail-head">
+      <span class="demoji" id="d-emoji"></span>
+      <h2 id="d-name"></h2>
+    </div>
+    <div class="detail-progress">
+      <span id="d-progress"></span>
+      <div class="detail-bar"><span id="d-bar"></span></div>
+    </div>
+    <ul class="topics" id="topics"></ul>
+    <div class="add-topic">
+      <input id="new-topic" type="text" placeholder="Add something you want to learn..." />
+      <button id="add-topic-btn">Add</button>
+    </div>
+  </div>
+
+  <!-- TOPIC PAGE -->
+  <div class="topic-page" id="topic-page">
+    <button class="back" id="topic-back">← back to domain</button>
+    <div class="breadcrumb" id="topic-crumb"></div>
+    <div class="topic-title-row">
+      <div style="flex:1; min-width: 0;">
+        <h2 id="topic-name"></h2>
+        <div class="topic-status" id="topic-status"></div>
+      </div>
+    </div>
+    <div class="panel" id="topic-comfort-panel">
+      <h3>How comfortable are you with this?</h3>
+      <div id="topic-comfort"></div>
+    </div>
+
+    <div class="panel">
+      <h3>📝 Notes</h3>
+      <textarea class="notes-area" id="topic-notes" placeholder="Jot down what you're learning, key ideas, questions, anything..."></textarea>
+      <div class="notes-saved" id="notes-saved">saved</div>
+    </div>
+
+    <div class="panel">
+      <h3>🔗 Resources <span class="pcount" id="rcount"></span></h3>
+      <ul class="resources" id="resources-list"></ul>
+      <div class="resources-empty" id="resources-empty">No resources yet — add articles, videos, books, courses below.</div>
+      <div class="add-resource">
+        <select id="r-type">
+          <option value="link">🔗 Link</option>
+          <option value="article">📄 Article</option>
+          <option value="video">📺 Video</option>
+          <option value="book">📘 Book</option>
+          <option value="course">🎓 Course</option>
+          <option value="podcast">🎙️ Podcast</option>
+          <option value="note">💡 Note</option>
+        </select>
+        <input id="r-title" type="text" placeholder="Title" />
+        <input id="r-url" type="text" placeholder="URL (optional for notes)" />
+        <button id="r-add">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <button id="export-btn">export</button> &nbsp;·&nbsp;
+    <button id="import-btn">import</button> &nbsp;·&nbsp;
+    <button id="reset-btn">reset all</button>
+  </footer>
+</div>
+
+<!-- ADD DOMAIN MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">New domain</h3>
+    <p id="modal-sub"></p>
+    <label>Name</label>
+    <input type="text" id="modal-name" placeholder="e.g. Astronomy, Pottery..." />
+    <label>Pick an icon</label>
+    <div class="emoji-grid" id="emoji-grid"></div>
+    <div class="actions">
+      <button class="btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn-primary" id="modal-save">Add</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" style="display:none" />
+
+<script src="comfort.js"></script>
+<script src="history-curriculum.js"></script>
+<script>
+/* ---------- starter content ---------- */
+const STARTER = {
+  subject: [
+    { id: 's_history', emoji: '🏛️', name: 'History', topics: [
+      'Ancient Mesopotamia & Egypt', 'Greek city-states', 'Roman Republic & Empire',
+      'Islamic Golden Age', 'Mongol Empire', 'Medieval Europe',
+      'Renaissance', 'Age of Exploration', 'French Revolution',
+      'Industrial Revolution', 'World War I', 'World War II',
+      'Cold War', 'Decolonization'
+    ]},
+    { id: 's_psych', emoji: '🧠', name: 'Psychology', topics: [
+      'Classical & operant conditioning', 'Attachment theory', 'Cognitive biases',
+      'Memory & forgetting', 'Big Five personality', 'Maslow’s hierarchy',
+      'Defense mechanisms', 'CBT basics', 'Developmental stages (Piaget)',
+      'Social conformity (Asch, Milgram)', 'Stress & coping', 'Positive psychology'
+    ]},
+    { id: 's_econ', emoji: '📈', name: 'Economics', topics: [
+      'Supply & demand', 'Elasticity', 'Opportunity cost',
+      'Market structures', 'GDP & growth', 'Inflation & deflation',
+      'Monetary policy', 'Fiscal policy', 'Comparative advantage',
+      'Game theory basics', 'Behavioral economics', 'Externalities'
+    ]},
+    { id: 's_phil', emoji: '🪶', name: 'Philosophy', topics: [
+      'Socratic method', 'Plato’s forms', 'Aristotelian ethics',
+      'Stoicism', 'Cartesian doubt', 'Empiricism vs rationalism',
+      'Kantian ethics', 'Utilitarianism', 'Existentialism'
+    ]},
+    { id: 's_sci', emoji: '🔬', name: 'Science', topics: [
+      'Scientific method', 'Atoms & elements', 'Cell biology basics',
+      'Evolution by natural selection', 'Newton’s laws', 'Thermodynamics',
+      'Electromagnetism', 'Plate tectonics', 'DNA & genetics',
+      'Quantum basics', 'Big Bang & cosmology'
+    ]}
+  ],
+  skill: [
+    { id: 'k_guitar', emoji: '🎸', name: 'Guitar', topics: [
+      'Tune by ear', 'Open chords (C, G, D, Em, Am)', 'Smooth chord transitions',
+      'Basic strumming patterns', 'Power chords', 'Barre chords',
+      'Fingerpicking patterns', 'Pentatonic scale', 'Play a full song start to end'
+    ]},
+    { id: 'k_cook', emoji: '🍳', name: 'Cooking', topics: [
+      'Knife skills (dice, julienne)', 'Cook rice perfectly', 'Boil & poach eggs',
+      'Make a pan sauce', 'Roast a whole vegetable', 'Sear protein properly',
+      'Bake bread from scratch', 'Make pasta from scratch', 'Build a stir-fry without a recipe',
+      'Season to taste confidently'
+    ]},
+    { id: 'k_garden', emoji: '🌱', name: 'Gardening', topics: [
+      'Identify my climate zone', 'Test & improve soil', 'Start seeds indoors',
+      'Transplant seedlings', 'Companion planting', 'Watering schedules',
+      'Compost setup', 'Prune properly', 'Save seeds for next season'
+    ]},
+    { id: 'k_draw', emoji: '✏️', name: 'Drawing', topics: [
+      'Confident line work', 'Basic shapes & forms', 'Perspective (1, 2, 3 point)',
+      'Light & shadow', 'Figure proportions', 'Faces & expressions',
+      'Hands & feet', 'Gesture drawing', 'Color theory'
+    ]},
+    { id: 'k_write', emoji: '✍️', name: 'Writing', topics: [
+      'Daily writing habit', 'Sharp sentences', 'Strong openings',
+      'Structuring an essay', 'Show don’t tell', 'Editing ruthlessly',
+      'Finding a voice', 'Finish a short story', 'Publish something publicly'
+    ]}
+  ]
+};
+
+const EMOJIS = ['📚','🧠','📈','🏛️','🪶','🔬','🌍','🧪','💻','📐','🎼','🎨','🎸','🎹','🥁','🎤','🍳','🍞','☕','🍷','🌱','🌿','🌸','🌳','✏️','🖌️','📷','🎬','✍️','📖','💃','🧘','🏃','🚴','⛰️','🏊','🧵','🧶','🪡','🔨','⚙️','🛠️','♟️','🎮','🃏','🧩','💡','✨','⭐','🔥','💎','🗺️','🧭','📅','💰','🌟','🦋','🐢','🐉','🦅'];
+
+/* ---------- state ---------- */
+const KEY = 'learnpath:v1';
+let state = load();
+
+function load() {
+  let s;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      s = JSON.parse(raw);
+      if (!s || !s.subject || !s.skill) s = seed();
+    } else {
+      s = seed();
+    }
+  } catch (e) { s = seed(); }
+  migrate(s);
+  return s;
+}
+function migrate(s) {
+  for (const kind of ['subject','skill']) {
+    for (const d of s[kind]) {
+      for (const t of d.topics) {
+        if (t.notes === undefined) t.notes = '';
+        if (!Array.isArray(t.resources)) t.resources = [];
+      }
+    }
+  }
+  if (window.MyPathComfort) MyPathComfort.migrate(s);
+  if (window.MyPathHistory) MyPathHistory.apply(s);
+}
+function seed() {
+  const s = { subject: [], skill: [] };
+  for (const kind of ['subject','skill']) {
+    for (const d of STARTER[kind]) {
+      s[kind].push({
+        id: d.id,
+        emoji: d.emoji,
+        name: d.name,
+        topics: d.topics.map((t,i) => ({ id: d.id + '_t' + i, label: t, done: false, comfort: 0, notes: '', resources: [] }))
+      });
+    }
+  }
+  return s;
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* ---------- rendering ---------- */
+let currentDomain = null;
+
+function render() {
+  renderGrid('subject');
+  renderGrid('skill');
+  renderOverall();
+}
+
+function renderGrid(kind) {
+  const grid = document.getElementById('grid-' + kind);
+  grid.innerHTML = '';
+  const domains = state[kind];
+  let totalTopics = 0, totalMastered = 0;
+  for (const d of domains) {
+    const t = d.topics.length;
+    const mastered = d.topics.filter(x => (x.comfort || 0) >= 10).length;
+    const avgC = t === 0 ? 0 : d.topics.reduce((s,x) => s + (x.comfort||0), 0) / t;
+    totalTopics += t; totalMastered += mastered;
+    const pct = Math.round(avgC * 10);
+    const card = document.createElement('div');
+    card.className = 'card' + (t > 0 && mastered === t ? ' done' : '');
+    card.dataset.id = d.id;
+    card.dataset.kind = kind;
+    card.innerHTML = `
+      <button class="del" title="Remove">×</button>
+      <div class="emoji">${d.emoji}</div>
+      <div class="name">${escapeHtml(d.name)}</div>
+      <div class="meta">${t === 0 ? 'no topics yet' : `avg ${avgC.toFixed(1)} / 10 · ${t} ${t === 1 ? 'topic' : 'topics'}`}</div>
+      <div class="bar"><span style="width:${pct}%"></span></div>
+    `;
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('del')) return;
+      openDetail(kind, d.id);
+    });
+    card.querySelector('.del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Remove "${d.name}" and all its topics?`)) {
+        state[kind] = state[kind].filter(x => x.id !== d.id);
+        save(); render();
+      }
+    });
+    grid.appendChild(card);
+  }
+  const add = document.createElement('div');
+  add.className = 'add-card';
+  add.innerHTML = `<span class="plus">+</span><span>add ${kind}</span>`;
+  add.addEventListener('click', () => openModal(kind));
+  grid.appendChild(add);
+
+  document.getElementById('count-' + kind).textContent =
+    totalTopics === 0 ? '' : `${totalMastered} mastered · ${totalTopics} ${totalTopics === 1 ? 'topic' : 'topics'}`;
+}
+
+function renderOverall() {
+  let total = 0, sum = 0, mastered = 0;
+  for (const kind of ['subject','skill']) {
+    for (const d of state[kind]) {
+      for (const t of d.topics) {
+        total++;
+        sum += (t.comfort || 0);
+        if ((t.comfort || 0) >= 10) mastered++;
+      }
+    }
+  }
+  const avg = total === 0 ? 0 : sum / total;
+  document.getElementById('overall').innerHTML =
+    total === 0 ? 'nothing yet — add a topic' : `avg <b>${avg.toFixed(1)}</b> / 10 · <b>${mastered}</b> mastered`;
+}
+
+function openDetail(kind, id) {
+  const d = state[kind].find(x => x.id === id);
+  if (!d) return;
+  currentDomain = { kind, id };
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('detail').classList.add('active');
+  document.getElementById('d-emoji').textContent = d.emoji;
+  document.getElementById('d-name').textContent = d.name;
+  renderTopics();
+  window.scrollTo(0, 0);
+}
+
+function renderTopics() {
+  if (!currentDomain) return;
+  const d = state[currentDomain.kind].find(x => x.id === currentDomain.id);
+  if (!d) { closeDetail(); return; }
+  const isSkill = currentDomain.kind === 'skill';
+  const ul = document.getElementById('topics');
+  ul.innerHTML = '';
+  let lastEra = null;
+  for (const t of d.topics) {
+    if (t.era && t.era !== lastEra) {
+      const header = document.createElement('li');
+      header.className = 'topic-section';
+      header.innerHTML = `<span class="era-name">${escapeHtml(t.era)}</span>${t.timespan ? `<span class="era-time">${escapeHtml(t.timespan)}</span>` : ''}`;
+      ul.appendChild(header);
+      lastEra = t.era;
+    }
+    const li = document.createElement('li');
+    const comfort = t.comfort || 0;
+    li.className = 'topic' + (comfort >= 10 ? ' done' : '');
+    li.dataset.tid = t.id;
+    const rcount = (t.resources && t.resources.length) || 0;
+    const hasNotes = t.notes && t.notes.trim().length > 0;
+    let badge = '';
+    if (rcount > 0) badge = `<span class="resource-count">${rcount} 🔗</span>`;
+    else if (hasNotes) badge = `<span class="resource-count">📝</span>`;
+    const ratingHtml = isSkill
+      ? MyPathComfort.bar(comfort, 'sm')
+      : `<div class="check" data-act="check"></div>`;
+    li.innerHTML = `
+      ${ratingHtml}
+      <div class="label">${escapeHtml(t.label)}</div>
+      ${badge}
+      <span class="chev">›</span>
+      <button class="remove" title="Remove topic">×</button>
+    `;
+    if (!isSkill) {
+      li.querySelector('.check').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasDone = (t.comfort || 0) >= 10;
+        t.comfort = wasDone ? 0 : 10;
+        t.done = !wasDone;
+        save();
+        renderTopics();
+        renderOverall();
+      });
+    }
+    li.querySelector('.remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Remove "${t.label}"? Its notes and resources will be deleted too.`)) {
+        d.topics = d.topics.filter(x => x.id !== t.id);
+        save();
+        renderTopics();
+        renderOverall();
+      }
+    });
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.remove')) return;
+      if (e.target.dataset.act === 'check') return;
+      if (e.target.closest('.cf-bar')) return;
+      openTopic(currentDomain.kind, currentDomain.id, t.id);
+    });
+    ul.appendChild(li);
+  }
+  if (isSkill) {
+    MyPathComfort.attachBars(ul, (v, barEl) => {
+      const li = barEl.closest('.topic');
+      if (!li) return;
+      const topic = d.topics.find(x => x.id === li.dataset.tid);
+      if (!topic) return;
+      topic.comfort = v;
+      topic.done = v >= 10;
+      save();
+      renderTopics();
+      renderOverall();
+    });
+  }
+  const total = d.topics.length;
+  const mastered = d.topics.filter(t => (t.comfort || 0) >= 10).length;
+  const avgC = total === 0 ? 0 : d.topics.reduce((s,t) => s + (t.comfort||0), 0) / total;
+  const pct = Math.round(avgC * 10);
+  document.getElementById('d-progress').textContent =
+    total === 0 ? 'no topics yet — add some below' : `avg ${avgC.toFixed(1)} / 10 across ${total} ${total === 1 ? 'topic' : 'topics'} · ${mastered} mastered`;
+  document.getElementById('d-bar').style.width = pct + '%';
+}
+
+function closeDetail() {
+  currentDomain = null;
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('detail').classList.remove('active');
+  render();
+}
+
+/* ---------- topic page ---------- */
+let currentTopic = null;
+const R_ICONS = { link:'🔗', article:'📄', video:'📺', book:'📘', course:'🎓', podcast:'🎙️', note:'💡' };
+
+function openTopic(kind, domainId, topicId) {
+  const d = state[kind].find(x => x.id === domainId);
+  if (!d) return;
+  const t = d.topics.find(x => x.id === topicId);
+  if (!t) return;
+  currentTopic = { kind, domainId, topicId };
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('detail').classList.remove('active');
+  document.getElementById('topic-page').classList.add('active');
+  document.getElementById('topic-name').textContent = t.label;
+  document.getElementById('topic-crumb').innerHTML =
+    `<a id="crumb-home">All</a><span class="sep">›</span><a id="crumb-domain">${escapeHtml(d.emoji)} ${escapeHtml(d.name)}</a><span class="sep">›</span>${escapeHtml(t.label)}`;
+  document.getElementById('crumb-home').addEventListener('click', closeTopicAndDetail);
+  document.getElementById('crumb-domain').addEventListener('click', closeTopic);
+  document.getElementById('topic-notes').value = t.notes || '';
+  renderTopicState();
+  renderResources();
+  window.scrollTo(0, 0);
+}
+
+function renderTopicState() {
+  if (!currentTopic) return;
+  const t = getTopic();
+  if (!t) return;
+  const status = document.getElementById('topic-status');
+  const comfort = t.comfort || 0;
+  status.classList.toggle('done', comfort >= 10);
+  if (comfort >= 10) status.textContent = '✓ mastered';
+  else if (comfort === 0) status.textContent = 'not started yet — set your comfort level below';
+  else if (comfort < 4) status.textContent = 'just getting started';
+  else if (comfort < 7) status.textContent = 'getting comfortable';
+  else status.textContent = 'almost there';
+  document.getElementById('topic-comfort').innerHTML = MyPathComfort.bar(comfort, 'lg');
+}
+
+function renderResources() {
+  if (!currentTopic) return;
+  const t = getTopic();
+  if (!t) return;
+  const ul = document.getElementById('resources-list');
+  const empty = document.getElementById('resources-empty');
+  ul.innerHTML = '';
+  const list = t.resources || [];
+  if (list.length === 0) {
+    empty.style.display = 'block';
+    document.getElementById('rcount').textContent = '';
+  } else {
+    empty.style.display = 'none';
+    document.getElementById('rcount').textContent = list.length;
+  }
+  for (const r of list) {
+    const li = document.createElement('li');
+    li.className = 'resource';
+    const icon = R_ICONS[r.type] || '🔗';
+    const titleHtml = r.url
+      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title || r.url)}</a>`
+      : `<span class="rtitle">${escapeHtml(r.title || '(untitled)')}</span>`;
+    li.innerHTML = `
+      <span class="rtype">${icon}</span>
+      <div class="rbody">
+        ${titleHtml}
+        ${r.url ? `<div class="rurl">${escapeHtml(r.url)}</div>` : ''}
+      </div>
+      <button class="rdel" title="Remove">×</button>
+    `;
+    li.querySelector('.rdel').addEventListener('click', () => {
+      t.resources = t.resources.filter(x => x.id !== r.id);
+      save();
+      renderResources();
+      // refresh resource count badge on the domain page when we go back
+    });
+    ul.appendChild(li);
+  }
+}
+
+function getTopic() {
+  if (!currentTopic) return null;
+  const d = state[currentTopic.kind].find(x => x.id === currentTopic.domainId);
+  if (!d) return null;
+  return d.topics.find(x => x.id === currentTopic.topicId);
+}
+
+function closeTopic() {
+  if (!currentTopic) return;
+  const kind = currentTopic.kind, domainId = currentTopic.domainId;
+  currentTopic = null;
+  document.getElementById('topic-page').classList.remove('active');
+  currentDomain = { kind, id: domainId };
+  document.getElementById('detail').classList.add('active');
+  document.getElementById('home').classList.add('hidden');
+  // re-render domain detail to reflect any changes
+  const d = state[kind].find(x => x.id === domainId);
+  document.getElementById('d-emoji').textContent = d.emoji;
+  document.getElementById('d-name').textContent = d.name;
+  renderTopics();
+}
+
+function closeTopicAndDetail() {
+  currentTopic = null;
+  document.getElementById('topic-page').classList.remove('active');
+  closeDetail();
+}
+
+document.getElementById('topic-back').addEventListener('click', closeTopic);
+MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v) => {
+  const t = getTopic();
+  if (!t) return;
+  t.comfort = v;
+  t.done = v >= 10;
+  save();
+  renderTopicState();
+});
+
+/* notes autosave (debounced) */
+let notesTimer = null;
+document.getElementById('topic-notes').addEventListener('input', (e) => {
+  const t = getTopic();
+  if (!t) return;
+  t.notes = e.target.value;
+  if (notesTimer) clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => {
+    save();
+    const saved = document.getElementById('notes-saved');
+    saved.classList.add('show');
+    setTimeout(() => saved.classList.remove('show'), 1200);
+  }, 400);
+});
+
+/* add resource */
+function addResource() {
+  const t = getTopic();
+  if (!t) return;
+  const typeSel = document.getElementById('r-type');
+  const titleIn = document.getElementById('r-title');
+  const urlIn = document.getElementById('r-url');
+  const title = titleIn.value.trim();
+  let url = urlIn.value.trim();
+  if (!title && !url) return;
+  if (url && !/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
+    url = 'https://' + url;
+  }
+  t.resources = t.resources || [];
+  t.resources.push({
+    id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    type: typeSel.value,
+    title: title || url,
+    url: url
+  });
+  titleIn.value = '';
+  urlIn.value = '';
+  save();
+  renderResources();
+}
+document.getElementById('r-add').addEventListener('click', addResource);
+document.getElementById('r-title').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
+document.getElementById('r-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
+
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/* ---------- topic adding ---------- */
+document.getElementById('add-topic-btn').addEventListener('click', addTopic);
+document.getElementById('new-topic').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addTopic();
+});
+function addTopic() {
+  if (!currentDomain) return;
+  const input = document.getElementById('new-topic');
+  const label = input.value.trim();
+  if (!label) return;
+  const d = state[currentDomain.kind].find(x => x.id === currentDomain.id);
+  d.topics.push({ id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), label, done: false, comfort: 0, notes: '', resources: [] });
+  input.value = '';
+  save();
+  renderTopics();
+}
+
+document.getElementById('back').addEventListener('click', closeDetail);
+
+/* ---------- add domain modal ---------- */
+let modalKind = null;
+let chosenEmoji = '📚';
+
+function openModal(kind) {
+  modalKind = kind;
+  chosenEmoji = kind === 'subject' ? '📚' : '🎨';
+  document.getElementById('modal-title').textContent =
+    kind === 'subject' ? 'New subject' : 'New skill';
+  document.getElementById('modal-sub').textContent =
+    kind === 'subject' ? 'Something you want to learn about.' : 'Something you want to be able to do.';
+  document.getElementById('modal-name').value = '';
+  const eg = document.getElementById('emoji-grid');
+  eg.innerHTML = '';
+  for (const e of EMOJIS) {
+    const b = document.createElement('button');
+    b.textContent = e;
+    if (e === chosenEmoji) b.classList.add('selected');
+    b.addEventListener('click', () => {
+      chosenEmoji = e;
+      eg.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    });
+    eg.appendChild(b);
+  }
+  document.getElementById('modal-bg').classList.add('active');
+  setTimeout(() => document.getElementById('modal-name').focus(), 50);
+}
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('active');
+  modalKind = null;
+}
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-bg').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-bg') closeModal();
+});
+document.getElementById('modal-save').addEventListener('click', () => {
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name || !modalKind) return;
+  const id = (modalKind === 'subject' ? 's_' : 'k_') + Date.now();
+  state[modalKind].push({ id, emoji: chosenEmoji, name, topics: [] });
+  save();
+  closeModal();
+  render();
+  openDetail(modalKind, id);
+});
+document.getElementById('modal-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('modal-save').click();
+});
+
+/* ---------- footer actions ---------- */
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Reset everything back to the starter list? Your custom additions and progress will be lost.')) {
+    state = seed();
+    save();
+    closeDetail();
+    render();
+  }
+});
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'learnpath-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const s = JSON.parse(reader.result);
+      if (!s.subject || !s.skill) throw new Error('bad file');
+      state = s;
+      save();
+      closeDetail();
+      render();
+    } catch (err) {
+      alert('That file doesn’t look right.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------- utils ---------- */
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- init ---------- */
+render();
+</script>
+<script src="ai.js"></script>
+<script>MyPathAI.init({ theme: 'paper', getNavContext: () => currentTopic });</script>
+</body>
+</html>
