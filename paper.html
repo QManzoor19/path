@@ -191,6 +191,105 @@
   }
   .add-card .plus { font-size: 26px; line-height: 1; }
 
+  /* domain card with cover */
+  .card.has-cover {
+    position: relative;
+    color: white;
+    overflow: hidden;
+    border-color: transparent;
+  }
+  .card.has-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--cover-url);
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+  }
+  .card.has-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 100%);
+    z-index: 0;
+  }
+  .card.has-cover > * { position: relative; z-index: 1; }
+  .card.has-cover .name { color: white; }
+  .card.has-cover .meta { color: rgba(255,255,255,0.85); }
+  .card.has-cover .bar { background: rgba(255,255,255,0.25); }
+  .card.has-cover .bar > span { background: white; }
+  .card.has-cover .del,
+  .card.has-cover .edit { color: white; }
+  .card .edit {
+    position: absolute;
+    top: 10px;
+    right: 38px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 2;
+    font-family: inherit;
+  }
+  .card:hover .edit { opacity: 1; }
+  .card .edit:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+  .card.has-cover:hover .edit { background: rgba(255,255,255,0.15); color: white; }
+  @media (hover: none) {
+    .card .edit, .card .del { opacity: 0.85; }
+  }
+
+  /* topic icon (in row) */
+  .topic .t-icon {
+    font-size: 18px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* topic page cover banner */
+  .topic-hero {
+    width: 100%;
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 14px;
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+  }
+  .topic-hero.empty { display: none; }
+  @media (max-width: 600px) { .topic-hero { height: 140px; } }
+
+  .topic-title-row .t-page-icon {
+    font-size: 38px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* cover preview in modals */
+  .cover-preview {
+    height: 80px;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--bg);
+    border: 1px dashed var(--line);
+    margin: 4px 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+  .cover-preview.has-cover { border-style: solid; color: transparent; }
+
   /* detail view */
   .detail { display: none; }
   .detail.active { display: block; }
@@ -697,6 +796,7 @@
     transition: transform 0.15s, opacity 0.15s;
   }
   .resource:hover .rurl-go { opacity: 1; transform: translateX(2px); }
+  .resource .redit,
   .resource .rdel {
     border: none;
     background: transparent;
@@ -708,8 +808,47 @@
     font-size: 14px;
     font-family: inherit;
   }
+  .resource:hover .redit,
   .resource:hover .rdel { opacity: 0.7; }
+  .resource .redit:hover,
   .resource .rdel:hover { background: rgba(194,83,42,0.1); color: var(--accent); opacity: 1; }
+  .resource.editing { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; }
+  .resource.editing .rtype,
+  .resource.editing .rbody,
+  .resource.editing .rdel,
+  .resource.editing .redit { display: none; }
+  .re-row { display: flex; gap: 6px; }
+  .re-row select,
+  .re-row input,
+  .re-url-input {
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background: white;
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+  }
+  .re-row select { flex-shrink: 0; }
+  .re-row input { flex: 1; }
+  .re-url-input { width: 100%; }
+  .re-row select:focus,
+  .re-row input:focus,
+  .re-url-input:focus { border-color: var(--accent); }
+  .re-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .re-actions button {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+  }
+  .re-actions .re-save { background: var(--ink); color: var(--bg); }
+  .re-actions .re-save:hover { background: var(--accent); }
+  .re-actions .re-cancel { background: transparent; color: var(--ink-soft); }
   .resources-empty {
     font-size: 13px;
     color: var(--ink-soft);
@@ -947,7 +1086,9 @@
   <div class="topic-page" id="topic-page">
     <button class="back" id="topic-back">← back to domain</button>
     <div class="breadcrumb" id="topic-crumb"></div>
+    <div class="topic-hero empty" id="topic-hero"></div>
     <div class="topic-title-row">
+      <span class="t-page-icon" id="topic-page-icon"></span>
       <div style="flex:1; min-width: 0;">
         <h2 id="topic-name"></h2>
         <div class="topic-status" id="topic-status"></div>
@@ -993,7 +1134,7 @@
   </footer>
 </div>
 
-<!-- ADD DOMAIN MODAL -->
+<!-- DOMAIN MODAL (add + edit) -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
     <h3 id="modal-title">New domain</h3>
@@ -1002,9 +1143,30 @@
     <input type="text" id="modal-name" placeholder="e.g. Astronomy, Pottery..." />
     <label>Pick an icon</label>
     <div class="emoji-grid" id="emoji-grid"></div>
+    <label>Cover image URL (optional)</label>
+    <input type="text" id="modal-cover" placeholder="https://images.unsplash.com/..." />
+    <div class="cover-preview" id="modal-cover-preview">no cover</div>
     <div class="actions">
       <button class="btn-secondary" id="modal-cancel">Cancel</button>
       <button class="btn-primary" id="modal-save">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPIC EDIT MODAL -->
+<div class="modal-bg" id="te-bg">
+  <div class="modal">
+    <h3>Edit topic</h3>
+    <label>Name</label>
+    <input type="text" id="te-name" />
+    <label>Icon (optional — pick one or leave blank)</label>
+    <div class="emoji-grid" id="te-emoji-grid"></div>
+    <label>Cover image URL (optional)</label>
+    <input type="text" id="te-cover" placeholder="https://..." />
+    <div class="cover-preview" id="te-cover-preview">no cover</div>
+    <div class="actions">
+      <button class="btn-secondary" id="te-cancel">Cancel</button>
+      <button class="btn-primary" id="te-save">Save</button>
     </div>
   </div>
 </div>
@@ -1147,11 +1309,13 @@ function renderGrid(kind) {
     totalTopics += t; totalMastered += mastered;
     const pct = Math.round(avgC * 10);
     const card = document.createElement('div');
-    card.className = 'card' + (t > 0 && mastered === t ? ' done' : '');
+    card.className = 'card' + (t > 0 && mastered === t ? ' done' : '') + (d.cover ? ' has-cover' : '');
+    if (d.cover) card.style.setProperty('--cover-url', `url("${d.cover.replace(/"/g, '%22')}")`);
     card.dataset.id = d.id;
     card.dataset.kind = kind;
     card.innerHTML = `
       <button class="del" title="Remove">×</button>
+      <button class="edit" title="Edit">✎</button>
       <div class="emoji">${d.emoji}</div>
       <div class="name">${escapeHtml(d.name)}</div>
       <div class="meta">${t === 0 ? 'no topics yet' : `avg ${avgC.toFixed(1)} / 10 · ${t} ${t === 1 ? 'topic' : 'topics'}`}</div>
@@ -1159,7 +1323,12 @@ function renderGrid(kind) {
     `;
     card.addEventListener('click', (e) => {
       if (e.target.classList.contains('del')) return;
+      if (e.target.classList.contains('edit')) return;
       openDetail(kind, d.id);
+    });
+    card.querySelector('.edit').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(kind, d.id);
     });
     card.querySelector('.del').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1237,13 +1406,15 @@ function renderTopics() {
     const ratingHtml = isSkill
       ? MyPathComfort.bar(comfort, 'sm')
       : `<div class="check" data-act="check"></div>`;
+    const iconHtml = t.icon ? `<span class="t-icon">${t.icon}</span>` : '';
     li.innerHTML = `
       ${ratingHtml}
+      ${iconHtml}
       <div class="label">${escapeHtml(t.label)}</div>
       ${badge}
       <span class="chev">›</span>
       <div class="t-drag" title="Drag to reorder" aria-label="Reorder">⋮⋮</div>
-      <button class="t-edit" title="Edit name">✎</button>
+      <button class="t-edit" title="Edit topic">✎</button>
       <button class="remove" title="Remove topic">×</button>
     `;
     if (!isSkill) {
@@ -1259,7 +1430,7 @@ function renderTopics() {
     }
     li.querySelector('.t-edit').addEventListener('click', (e) => {
       e.stopPropagation();
-      beginEditTopicLabel(li, t);
+      openTopicEditModal(t);
     });
     li.querySelector('.remove').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1520,6 +1691,15 @@ function openTopic(kind, domainId, topicId) {
   document.getElementById('detail').classList.remove('active');
   document.getElementById('topic-page').classList.add('active');
   document.getElementById('topic-name').textContent = t.label;
+  document.getElementById('topic-page-icon').textContent = t.icon || '';
+  const hero = document.getElementById('topic-hero');
+  if (t.cover) {
+    hero.classList.remove('empty');
+    hero.style.backgroundImage = `url("${t.cover.replace(/"/g, '%22')}")`;
+  } else {
+    hero.classList.add('empty');
+    hero.style.backgroundImage = '';
+  }
   document.getElementById('topic-crumb').innerHTML =
     `<a id="crumb-home">All</a><span class="sep">›</span><a id="crumb-domain">${escapeHtml(d.emoji)} ${escapeHtml(d.name)}</a><span class="sep">›</span>${escapeHtml(t.label)}`;
   document.getElementById('crumb-home').addEventListener('click', closeTopicAndDetail);
@@ -1585,21 +1765,17 @@ function renderResources() {
     li.className = 'resource';
     li.dataset.rtype = r.type || 'link';
     const icon = R_ICONS[r.type] || '🔗';
-    const domain = r.url ? urlDomain(r.url) : '';
+    const titleText = r.title || (r.url ? urlDomain(r.url) : '(untitled)');
     const titleHtml = r.url
-      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title || domain || r.url)}</a>`
-      : `<span class="rtitle">${escapeHtml(r.title || '(untitled)')}</span>`;
-    const urlHtml = r.url
-      ? `<div class="rurl">${escapeHtml(domain)}<span class="rurl-go">↗</span></div>`
-      : '';
+      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(titleText)}</a>`
+      : `<span class="rtitle">${escapeHtml(titleText)}</span>`;
     li.innerHTML = `
       <span class="rtype">${icon}</span>
-      <div class="rbody">
-        ${titleHtml}
-        ${urlHtml}
-      </div>
+      <div class="rbody">${titleHtml}</div>
+      <button class="redit" title="Edit">✎</button>
       <button class="rdel" title="Remove">×</button>
     `;
+    li.querySelector('.redit').addEventListener('click', () => beginEditResource(li, r));
     li.querySelector('.rdel').addEventListener('click', () => {
       if (!confirm('Remove this resource?')) return;
       t.resources = t.resources.filter(x => x.id !== r.id);
@@ -1608,6 +1784,59 @@ function renderResources() {
     });
     ul.appendChild(li);
   }
+}
+
+function beginEditResource(li, r) {
+  if (li.classList.contains('editing')) return;
+  li.classList.add('editing');
+  const types = [
+    ['link','🔗 Link'], ['article','📄 Article'], ['video','📺 Video'],
+    ['book','📘 Book'], ['course','🎓 Course'], ['podcast','🎙️ Podcast'], ['note','💡 Note'],
+  ];
+  const optsHtml = types.map(([v,lbl]) =>
+    `<option value="${v}"${r.type === v ? ' selected' : ''}>${lbl}</option>`
+  ).join('');
+  const form = document.createElement('div');
+  form.innerHTML = `
+    <div class="re-row">
+      <select class="re-type">${optsHtml}</select>
+      <input class="re-title" type="text" placeholder="Title" value="${escapeAttr(r.title || '')}" />
+    </div>
+    <input class="re-url-input" type="text" placeholder="URL (leave blank for a plain note)" value="${escapeAttr(r.url || '')}" />
+    <div class="re-actions">
+      <button class="re-cancel" type="button">Cancel</button>
+      <button class="re-save" type="button">Save</button>
+    </div>
+  `;
+  // wipe inner content and append form
+  while (li.firstChild) li.removeChild(li.firstChild);
+  while (form.firstChild) li.appendChild(form.firstChild);
+  const titleIn = li.querySelector('.re-title');
+  titleIn.focus();
+  titleIn.setSelectionRange(titleIn.value.length, titleIn.value.length);
+  const cancel = () => renderResources();
+  const commit = () => {
+    const newType = li.querySelector('.re-type').value;
+    const newTitle = li.querySelector('.re-title').value.trim();
+    let newUrl = li.querySelector('.re-url-input').value.trim();
+    if (newUrl && !/^https?:\/\//i.test(newUrl) && !/^mailto:/i.test(newUrl)) {
+      newUrl = 'https://' + newUrl;
+    }
+    if (!newTitle && !newUrl) { cancel(); return; }
+    r.type = newType;
+    r.title = newTitle || newUrl;
+    r.url = newUrl;
+    save();
+    renderResources();
+  };
+  li.querySelector('.re-save').addEventListener('click', commit);
+  li.querySelector('.re-cancel').addEventListener('click', cancel);
+  [titleIn, li.querySelector('.re-url-input')].forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+  });
 }
 
 /* ---------- multi-note rendering ---------- */
@@ -1786,18 +2015,39 @@ function addTopic() {
 
 document.getElementById('back').addEventListener('click', closeDetail);
 
-/* ---------- add domain modal ---------- */
+/* ---------- domain modal (add + edit) ---------- */
 let modalKind = null;
+let modalEditId = null;
 let chosenEmoji = '📚';
 
-function openModal(kind) {
+function updateCoverPreview(inputId, previewId) {
+  const url = document.getElementById(inputId).value.trim();
+  const pv = document.getElementById(previewId);
+  if (url) {
+    pv.classList.add('has-cover');
+    pv.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`;
+  } else {
+    pv.classList.remove('has-cover');
+    pv.style.backgroundImage = '';
+  }
+}
+
+function openModal(kind, editId) {
   modalKind = kind;
-  chosenEmoji = kind === 'subject' ? '📚' : '🎨';
-  document.getElementById('modal-title').textContent =
-    kind === 'subject' ? 'New subject' : 'New skill';
-  document.getElementById('modal-sub').textContent =
-    kind === 'subject' ? 'Something you want to learn about.' : 'Something you want to be able to do.';
-  document.getElementById('modal-name').value = '';
+  modalEditId = editId || null;
+  const editing = !!modalEditId;
+  const existing = editing ? state[kind].find(x => x.id === editId) : null;
+  chosenEmoji = existing ? existing.emoji : (kind === 'subject' ? '📚' : '🎨');
+  document.getElementById('modal-title').textContent = editing
+    ? 'Edit ' + (kind === 'subject' ? 'subject' : 'skill')
+    : 'New ' + (kind === 'subject' ? 'subject' : 'skill');
+  document.getElementById('modal-sub').textContent = editing
+    ? ''
+    : (kind === 'subject' ? 'Something you want to learn about.' : 'Something you want to be able to do.');
+  document.getElementById('modal-name').value = existing ? existing.name : '';
+  document.getElementById('modal-cover').value = existing && existing.cover ? existing.cover : '';
+  document.getElementById('modal-save').textContent = editing ? 'Save' : 'Add';
+  updateCoverPreview('modal-cover', 'modal-cover-preview');
   const eg = document.getElementById('emoji-grid');
   eg.innerHTML = '';
   for (const e of EMOJIS) {
@@ -1817,23 +2067,128 @@ function openModal(kind) {
 function closeModal() {
   document.getElementById('modal-bg').classList.remove('active');
   modalKind = null;
+  modalEditId = null;
 }
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 document.getElementById('modal-bg').addEventListener('click', (e) => {
   if (e.target.id === 'modal-bg') closeModal();
 });
+document.getElementById('modal-cover').addEventListener('input', () => {
+  updateCoverPreview('modal-cover', 'modal-cover-preview');
+});
 document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('modal-name').value.trim();
   if (!name || !modalKind) return;
-  const id = (modalKind === 'subject' ? 's_' : 'k_') + Date.now();
-  state[modalKind].push({ id, emoji: chosenEmoji, name, topics: [] });
-  save();
-  closeModal();
-  render();
-  openDetail(modalKind, id);
+  const cover = document.getElementById('modal-cover').value.trim();
+  if (modalEditId) {
+    const dom = state[modalKind].find(x => x.id === modalEditId);
+    if (dom) {
+      dom.name = name;
+      dom.emoji = chosenEmoji;
+      dom.cover = cover || '';
+      save();
+      closeModal();
+      render();
+      // if the user is on the detail page for this domain, refresh the header
+      if (currentDomain && currentDomain.id === modalEditId) {
+        document.getElementById('d-emoji').textContent = dom.emoji;
+        document.getElementById('d-name').textContent = dom.name;
+      }
+    } else {
+      closeModal();
+    }
+  } else {
+    const id = (modalKind === 'subject' ? 's_' : 'k_') + Date.now();
+    const dom = { id, emoji: chosenEmoji, name, topics: [] };
+    if (cover) dom.cover = cover;
+    state[modalKind].push(dom);
+    save();
+    closeModal();
+    render();
+    openDetail(modalKind, id);
+  }
 });
 document.getElementById('modal-name').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('modal-save').click();
+});
+
+/* ---------- topic edit modal ---------- */
+let teTopicRef = null;       // { kind, domainId, topicId }
+let teChosenIcon = '';
+
+function openTopicEditModal(topic) {
+  // resolve location of the topic so we can mutate it on save
+  let loc = null;
+  for (const kind of ['subject','skill']) {
+    for (const d of state[kind]) {
+      if (d.topics.includes(topic)) { loc = { kind, domainId: d.id, topicId: topic.id }; break; }
+    }
+    if (loc) break;
+  }
+  if (!loc) return;
+  teTopicRef = loc;
+  teChosenIcon = topic.icon || '';
+  document.getElementById('te-name').value = topic.label;
+  document.getElementById('te-cover').value = topic.cover || '';
+  updateCoverPreview('te-cover', 'te-cover-preview');
+  const eg = document.getElementById('te-emoji-grid');
+  eg.innerHTML = '';
+  const choices = [''].concat(EMOJIS); // '' = no icon
+  for (const e of choices) {
+    const b = document.createElement('button');
+    b.textContent = e || '∅';
+    if (!e) b.title = 'No icon';
+    if (e === teChosenIcon) b.classList.add('selected');
+    b.addEventListener('click', () => {
+      teChosenIcon = e;
+      eg.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    });
+    eg.appendChild(b);
+  }
+  document.getElementById('te-bg').classList.add('active');
+  setTimeout(() => document.getElementById('te-name').focus(), 50);
+}
+function closeTopicEditModal() {
+  document.getElementById('te-bg').classList.remove('active');
+  teTopicRef = null;
+}
+document.getElementById('te-cancel').addEventListener('click', closeTopicEditModal);
+document.getElementById('te-bg').addEventListener('click', (e) => {
+  if (e.target.id === 'te-bg') closeTopicEditModal();
+});
+document.getElementById('te-cover').addEventListener('input', () => {
+  updateCoverPreview('te-cover', 'te-cover-preview');
+});
+document.getElementById('te-save').addEventListener('click', () => {
+  if (!teTopicRef) return;
+  const dom = state[teTopicRef.kind].find(x => x.id === teTopicRef.domainId);
+  const topic = dom && dom.topics.find(x => x.id === teTopicRef.topicId);
+  if (!topic) { closeTopicEditModal(); return; }
+  const name = document.getElementById('te-name').value.trim();
+  const cover = document.getElementById('te-cover').value.trim();
+  if (name) topic.label = name;
+  topic.icon = teChosenIcon || '';
+  topic.cover = cover || '';
+  save();
+  closeTopicEditModal();
+  // re-render whichever view is showing
+  if (currentTopic && currentTopic.topicId === topic.id) {
+    document.getElementById('topic-name').textContent = topic.label;
+    document.getElementById('topic-page-icon').textContent = topic.icon || '';
+    const hero = document.getElementById('topic-hero');
+    if (topic.cover) {
+      hero.classList.remove('empty');
+      hero.style.backgroundImage = `url("${topic.cover.replace(/"/g, '%22')}")`;
+    } else {
+      hero.classList.add('empty');
+      hero.style.backgroundImage = '';
+    }
+  }
+  if (currentDomain) renderTopics();
+});
+document.getElementById('te-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('te-save').click();
 });
 
 /* ---------- footer actions ---------- */
