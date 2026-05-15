@@ -1886,9 +1886,18 @@ function renderGrid(kind) {
   for (const d of domains) {
     const t = d.topics.length;
     const mastered = d.topics.filter(x => (x.comfort || 0) >= 10).length;
+    const covered = d.topics.filter(x => (x.comfort || 0) > 0).length;
     const avgC = t === 0 ? 0 : d.topics.reduce((s,x) => s + (x.comfort||0), 0) / t;
     totalTopics += t; totalMastered += mastered;
-    const pct = Math.round(avgC * 10);
+    // For subjects, the bar + meta lead with "covered" %; for skills, lead with avg comfort.
+    const coveredPct = t === 0 ? 0 : Math.round((covered / t) * 100);
+    const avgPct = Math.round(avgC * 10);
+    const pct = kind === 'subject' ? coveredPct : avgPct;
+    const metaTxt = t === 0
+      ? 'no topics yet'
+      : (kind === 'subject'
+          ? `<b>${coveredPct}%</b> covered · ${covered}/${t}`
+          : `avg ${avgC.toFixed(1)} / 10 · ${t} ${t === 1 ? 'topic' : 'topics'}`);
     const card = document.createElement('div');
     card.className = 'card' + (t > 0 && mastered === t ? ' done' : '') + (d.cover ? ' has-cover' : '');
     if (d.cover) card.style.setProperty('--cover-url', `url("${d.cover.replace(/"/g, '%22')}")`);
@@ -1899,7 +1908,7 @@ function renderGrid(kind) {
       <button class="edit" title="Edit">✎</button>
       <div class="emoji">${d.emoji}</div>
       <div class="name">${escapeHtml(d.name)}</div>
-      <div class="meta">${t === 0 ? 'no topics yet' : `avg ${avgC.toFixed(1)} / 10 · ${t} ${t === 1 ? 'topic' : 'topics'}`}</div>
+      <div class="meta">${metaTxt}</div>
       <div class="bar"><span style="width:${pct}%"></span></div>
     `;
     card.addEventListener('click', (e) => {
