@@ -438,8 +438,13 @@
   }
   .topic .label {
     flex: 1;
-    font-size: 15px;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 16.5px;
+    letter-spacing: -0.008em;
+    line-height: 1.3;
     transition: color 0.15s;
+    min-width: 0;
   }
   .topic.done .label {
     color: var(--ink-soft);
@@ -1027,6 +1032,38 @@
   }
   footer.app-footer button:hover { color: var(--accent); }
 
+  /* ---- fun: paper grain ---- */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9000;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+  }
+  body.dark::after { opacity: 0.08; mix-blend-mode: screen; }
+
+  /* ---- fun: ink-dot ripple on tap ---- */
+  .topic, .panel { position: relative; overflow: hidden; }
+  .ink-dot {
+    position: absolute;
+    pointer-events: none;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+    z-index: 0;
+    animation: ink-dot 0.6s ease-out forwards;
+  }
+  @keyframes ink-dot {
+    0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.35; }
+    60%  { opacity: 0.18; }
+    100% { transform: translate(-50%, -50%) scale(7); opacity: 0; }
+  }
+
   /* ---- fun: confetti burst ---- */
   .confetti-piece {
     position: fixed;
@@ -1327,20 +1364,71 @@ function applyTheme(theme) {
   applyTheme(theme);
 })();
 
-/* ---------- time-of-day greeting ---------- */
+/* ---------- time-of-day greeting (rotating variants) ---------- */
 function applyGreeting() {
   const el = document.getElementById('tagline');
   if (!el) return;
   const h = new Date().getHours();
-  let part, icon, line;
-  if (h < 5)      { part = 'late tonight';  icon = '🌙'; line = 'late tonight — pick a small thing.'; }
-  else if (h < 12){ part = 'this morning';  icon = '☀';  line = 'good morning. what shall we learn today?'; }
-  else if (h < 17){ part = 'this afternoon';icon = '☕'; line = 'good afternoon. one topic at a time.'; }
-  else if (h < 21){ part = 'this evening';  icon = '🌆'; line = 'good evening. ten minutes is enough.'; }
-  else            { part = 'tonight';       icon = '✨'; line = 'tonight — quietly chip away.'; }
+  let icon, lines;
+  if (h < 5) {
+    icon = '🌙';
+    lines = [
+      'late tonight — pick a small thing.',
+      'the night is long. one page is plenty.',
+      'quietly, before sleep — one little thing.',
+    ];
+  } else if (h < 12) {
+    icon = '☀';
+    lines = [
+      'good morning. what shall we learn today?',
+      'fresh page. fresh mind. begin.',
+      'the morning is wide open.',
+      'good morning. small steps add up.',
+    ];
+  } else if (h < 17) {
+    icon = '☕';
+    lines = [
+      'good afternoon. one topic at a time.',
+      'afternoon — keep a hand on the thread.',
+      'mid-day. easy now. chip away.',
+    ];
+  } else if (h < 21) {
+    icon = '🌆';
+    lines = [
+      'good evening. ten minutes is enough.',
+      'evening — what stuck today?',
+      'wind down with one curious thing.',
+    ];
+  } else {
+    icon = '✨';
+    lines = [
+      'tonight — quietly chip away.',
+      'late evening. one small thread.',
+      'soft hours. small wins.',
+    ];
+  }
+  const line = lines[Math.floor(Math.random() * lines.length)];
   el.innerHTML = `${icon} <span style="opacity:0.85">${line}</span>`;
 }
 applyGreeting();
+
+/* ---------- ink-dot ripple on tap ---------- */
+document.addEventListener('pointerdown', (e) => {
+  const host = e.target.closest('.card, .topic, .resource, .note, .panel');
+  if (!host) return;
+  // skip if interacting with explicit controls
+  if (e.target.closest('button, input, textarea, select, a, .cf-bar, .check, .t-drag, .t-icon, .ink-dot, .label-input, .note-text')) return;
+  if (host.classList.contains('dragging')) return;
+  const r = host.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  const dot = document.createElement('span');
+  dot.className = 'ink-dot';
+  dot.style.left = x + 'px';
+  dot.style.top = y + 'px';
+  host.appendChild(dot);
+  setTimeout(() => dot.remove(), 650);
+}, { passive: true });
 
 /* ---------- confetti burst (paper-themed) ---------- */
 function burstConfetti(x, y) {
