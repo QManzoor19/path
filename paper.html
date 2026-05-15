@@ -141,10 +141,13 @@
     position: relative;
     overflow: hidden;
   }
+  .card { perspective: 800px; transform-style: preserve-3d; }
   .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px) rotateX(2deg) rotateY(-1.5deg);
     border-color: var(--accent-soft);
+    box-shadow: 0 14px 32px rgba(60,40,20,0.10), 0 1px 0 rgba(0,0,0,0.04);
   }
+  body.dark .card:hover { box-shadow: 0 14px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(0,0,0,0.3); }
   .card .emoji {
     font-size: 28px;
     line-height: 1;
@@ -1024,6 +1027,38 @@
   }
   footer.app-footer button:hover { color: var(--accent); }
 
+  /* ---- fun: confetti burst ---- */
+  .confetti-piece {
+    position: fixed;
+    pointer-events: none;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    z-index: 9999;
+    top: 0; left: 0;
+    will-change: transform, opacity;
+  }
+  @keyframes confetti-fall {
+    0%   { transform: translate(var(--sx), var(--sy)) rotate(0); opacity: 1; }
+    100% { transform: translate(calc(var(--sx) + var(--ex)), calc(var(--sy) + var(--ey))) rotate(var(--er)); opacity: 0; }
+  }
+
+  /* ---- fun: dark mode wipe ---- */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(root) { z-index: 1; }
+  ::view-transition-new(root) {
+    z-index: 2;
+    animation: theme-wipe 0.55s cubic-bezier(.22,.95,.33,1);
+  }
+  @keyframes theme-wipe {
+    from { clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 50%)); }
+    to   { clip-path: circle(var(--wipe-r, 150vmax) at var(--wipe-x, 50%) var(--wipe-y, 50%)); }
+  }
+
   /* ---- touch devices: no hover, so always show row controls ---- */
   @media (hover: none) {
     .topic .t-drag,
@@ -1064,7 +1099,7 @@
   <header class="app-header">
     <div>
       <h1>Path<span class="dot">.</span></h1>
-      <div class="tagline">Everything I want to learn — one place to chip away at it.</div>
+      <div class="tagline" id="tagline">Everything I want to learn — one place to chip away at it.</div>
     </div>
     <div class="overall" id="overall">— learned</div>
   </header>
@@ -1292,6 +1327,51 @@ function applyTheme(theme) {
   applyTheme(theme);
 })();
 
+/* ---------- time-of-day greeting ---------- */
+function applyGreeting() {
+  const el = document.getElementById('tagline');
+  if (!el) return;
+  const h = new Date().getHours();
+  let part, icon, line;
+  if (h < 5)      { part = 'late tonight';  icon = '🌙'; line = 'late tonight — pick a small thing.'; }
+  else if (h < 12){ part = 'this morning';  icon = '☀';  line = 'good morning. what shall we learn today?'; }
+  else if (h < 17){ part = 'this afternoon';icon = '☕'; line = 'good afternoon. one topic at a time.'; }
+  else if (h < 21){ part = 'this evening';  icon = '🌆'; line = 'good evening. ten minutes is enough.'; }
+  else            { part = 'tonight';       icon = '✨'; line = 'tonight — quietly chip away.'; }
+  el.innerHTML = `${icon} <span style="opacity:0.85">${line}</span>`;
+}
+applyGreeting();
+
+/* ---------- confetti burst (paper-themed) ---------- */
+function burstConfetti(x, y) {
+  if (!document.body) return;
+  const colors = ['#c2532a', '#e8a583', '#5c8a3a', '#f2d479', '#fbf6ec', '#6b5e52'];
+  const N = 22;
+  for (let i = 0; i < N; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.background = colors[i % colors.length];
+    const angle = (Math.PI * 2 * i) / N + (Math.random() - 0.5) * 0.4;
+    const speed = 60 + Math.random() * 120;
+    const ex = Math.cos(angle) * speed;
+    const ey = Math.sin(angle) * speed - 30 + Math.random() * 60;
+    const er = (Math.random() * 720 - 360) + 'deg';
+    el.style.setProperty('--sx', x + 'px');
+    el.style.setProperty('--sy', y + 'px');
+    el.style.setProperty('--ex', ex + 'px');
+    el.style.setProperty('--ey', ey + 'px');
+    el.style.setProperty('--er', er);
+    el.style.animation = `confetti-fall ${0.8 + Math.random() * 0.6}s ease-out forwards`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+}
+function burstFromElement(el) {
+  if (!el || !el.getBoundingClientRect) return;
+  const r = el.getBoundingClientRect();
+  burstConfetti(r.left + r.width / 2, r.top + r.height / 2);
+}
+
 let state = load();
 
 function load() {
@@ -1471,6 +1551,7 @@ function renderTopics() {
         const wasDone = (t.comfort || 0) >= 10;
         t.comfort = wasDone ? 0 : 10;
         t.done = !wasDone;
+        if (!wasDone) burstFromElement(e.currentTarget);
         save();
         renderTopics();
         renderOverall();
@@ -1508,8 +1589,10 @@ function renderTopics() {
       if (!li) return;
       const topic = d.topics.find(x => x.id === li.dataset.tid);
       if (!topic) return;
+      const wasMastered = (topic.comfort || 0) >= 10;
       topic.comfort = v;
       topic.done = v >= 10;
+      if (!wasMastered && v >= 10) burstFromElement(barEl);
       save();
       renderTopics();
       renderOverall();
@@ -2000,11 +2083,13 @@ function closeTopicAndDetail() {
 }
 
 document.getElementById('topic-back').addEventListener('click', closeTopic);
-MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v) => {
+MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v, barEl) => {
   const t = getTopic();
   if (!t) return;
+  const wasMastered = (t.comfort || 0) >= 10;
   t.comfort = v;
   t.done = v >= 10;
+  if (!wasMastered && v >= 10) burstFromElement(barEl || document.getElementById('topic-comfort-panel'));
   save();
   renderTopicState();
 });
@@ -2240,11 +2325,29 @@ document.getElementById('te-name').addEventListener('keydown', (e) => {
 });
 
 /* ---------- footer actions ---------- */
-document.getElementById('theme-toggle').addEventListener('click', () => {
+document.getElementById('theme-toggle').addEventListener('click', (e) => {
   const isDark = document.body.classList.contains('dark');
   const next = isDark ? 'light' : 'dark';
-  applyTheme(next);
-  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  const btn = e.currentTarget.getBoundingClientRect();
+  const cx = btn.left + btn.width / 2;
+  const cy = btn.top + btn.height / 2;
+  const r = Math.hypot(
+    Math.max(cx, window.innerWidth - cx),
+    Math.max(cy, window.innerHeight - cy)
+  );
+  const root = document.documentElement;
+  root.style.setProperty('--wipe-x', cx + 'px');
+  root.style.setProperty('--wipe-y', cy + 'px');
+  root.style.setProperty('--wipe-r', r + 'px');
+  const apply = () => {
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (er) {}
+  };
+  if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.startViewTransition(apply);
+  } else {
+    apply();
+  }
 });
 document.getElementById('reset-btn').addEventListener('click', () => {
   if (confirm('Reset everything back to the starter list? Your custom additions and progress will be lost.')) {
