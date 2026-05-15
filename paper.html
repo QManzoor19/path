@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#c2532a" />
 <link rel="icon" type="image/png" href="icon.png" />
 <link rel="apple-touch-icon" href="icon.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Path" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <title>LearnPath — everything I want to learn</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1394,5 +1399,6 @@ render();
 </script>
 <script src="ai.js"></script>
 <script>MyPathAI.init({ theme: 'paper', getNavContext: () => currentTopic });</script>
+<script>if ('serviceWorker' in navigator) { addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }</script>
 </body>
 </html>
