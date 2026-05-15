@@ -487,19 +487,16 @@
   .topic .check {
     width: 24px;
     height: 24px;
-    border: 2.5px solid var(--ink-soft);
+    border: 2.5px solid var(--check-outline, var(--ink-soft));
     border-radius: 7px;
-    background: #fbf6ec;
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
   }
-  body.dark .topic .check {
-    background: #efe6d3;
-    border-color: #b9aa8d;
-  }
+  body.dark .topic .check { --check-outline: #ffffff; }
   .topic.done .check {
     background: var(--done);
     border-color: var(--done);
@@ -963,40 +960,22 @@
     padding: 4px 0 14px;
   }
 
-  .add-resource {
-    display: grid;
-    grid-template-columns: auto 1fr 2fr auto;
-    gap: 6px;
-    align-items: stretch;
-  }
-  .add-resource select,
-  .add-resource input {
-    padding: 9px 10px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--bg);
-    font-family: inherit;
-    font-size: 13px;
-    color: var(--ink);
-    outline: none;
-    min-width: 0;
-  }
-  .add-resource input:focus,
-  .add-resource select:focus { border-color: var(--accent); }
-  .add-resource button {
-    padding: 0 14px;
-    background: var(--ink);
-    color: var(--bg);
-    border: none;
-    border-radius: 8px;
+  .add-resource-btn {
+    border: 1.5px dashed var(--line);
+    background: transparent;
+    color: var(--ink-soft);
     cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 10px;
     font-family: inherit;
     font-size: 13px;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
-  .add-resource button:hover { background: var(--accent); }
-  @media (max-width: 600px) {
-    .add-resource { grid-template-columns: 1fr 1fr; }
-    .add-resource button { grid-column: span 2; padding: 9px; }
+  .add-resource-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(194,83,42,0.04);
   }
 
   /* modal */
@@ -1275,7 +1254,7 @@
     .panel { padding: 16px; }
     .topic-title-row h2 { font-size: 24px; }
     /* iOS: input font-size >= 16px prevents zoom-on-focus */
-    .add-topic input, .add-resource input, .add-resource select,
+    .add-topic input,
     .note-text, .modal input { font-size: 16px; }
   }
 </style>
@@ -1363,21 +1342,8 @@
     <div class="panel">
       <h3>🔗 Resources <span class="pcount" id="rcount"></span></h3>
       <ul class="resources" id="resources-list"></ul>
-      <div class="resources-empty" id="resources-empty">No resources yet — add articles, videos, books, courses below.</div>
-      <div class="add-resource">
-        <select id="r-type">
-          <option value="link">🔗 Link</option>
-          <option value="article">📄 Article</option>
-          <option value="video">📺 Video</option>
-          <option value="book">📘 Book</option>
-          <option value="course">🎓 Course</option>
-          <option value="podcast">🎙️ Podcast</option>
-          <option value="note">💡 Note</option>
-        </select>
-        <input id="r-title" type="text" placeholder="Title" />
-        <input id="r-url" type="text" placeholder="URL (optional for notes)" />
-        <button id="r-add">Add</button>
-      </div>
+      <div class="resources-empty" id="resources-empty">No resources yet — articles, videos, books, courses.</div>
+      <button class="add-resource-btn" id="add-resource-btn">+ Add resource</button>
     </div>
   </div>
 
@@ -2556,34 +2522,68 @@ MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v, bar
 
 document.getElementById('add-note-btn').addEventListener('click', addNote);
 
-/* add resource */
-function addResource() {
-  const t = getTopic();
-  if (!t) return;
-  const typeSel = document.getElementById('r-type');
-  const titleIn = document.getElementById('r-title');
-  const urlIn = document.getElementById('r-url');
-  const title = titleIn.value.trim();
-  let url = urlIn.value.trim();
-  if (!title && !url) return;
-  if (url && !/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
-    url = 'https://' + url;
-  }
-  t.resources = t.resources || [];
-  t.resources.push({
-    id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    type: typeSel.value,
-    title: title || url,
-    url: url
+/* add resource — button reveals an inline form */
+function showAddResourceForm() {
+  const btn = document.getElementById('add-resource-btn');
+  if (!btn || document.getElementById('new-resource-form')) return;
+  const types = [
+    ['link','🔗 Link'], ['article','📄 Article'], ['video','📺 Video'],
+    ['book','📘 Book'], ['course','🎓 Course'], ['podcast','🎙️ Podcast'], ['note','💡 Note'],
+  ];
+  const optsHtml = types.map(([v,lbl]) => `<option value="${v}">${lbl}</option>`).join('');
+  const form = document.createElement('li');
+  form.className = 'resource editing';
+  form.id = 'new-resource-form';
+  form.innerHTML = `
+    <div class="re-row">
+      <select class="re-type">${optsHtml}</select>
+      <input class="re-title" type="text" placeholder="Title" />
+    </div>
+    <input class="re-url-input" type="text" placeholder="URL (leave blank for a plain note)" />
+    <div class="re-actions">
+      <button class="re-cancel" type="button">Cancel</button>
+      <button class="re-save" type="button">Add</button>
+    </div>
+  `;
+  // append into resources list, hide button
+  const list = document.getElementById('resources-list');
+  list.appendChild(form);
+  btn.style.display = 'none';
+  const titleIn = form.querySelector('.re-title');
+  titleIn.focus();
+  const cancel = () => {
+    form.remove();
+    btn.style.display = '';
+  };
+  const commit = () => {
+    const t = getTopic();
+    if (!t) { cancel(); return; }
+    const type = form.querySelector('.re-type').value;
+    const title = form.querySelector('.re-title').value.trim();
+    let url = form.querySelector('.re-url-input').value.trim();
+    if (url && !/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
+      url = 'https://' + url;
+    }
+    if (!title && !url) { cancel(); return; }
+    t.resources = t.resources || [];
+    t.resources.push({
+      id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      type, title: title || url, url,
+    });
+    save();
+    cancel();
+    renderResources();
+  };
+  form.querySelector('.re-save').addEventListener('click', commit);
+  form.querySelector('.re-cancel').addEventListener('click', cancel);
+  [titleIn, form.querySelector('.re-url-input')].forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
   });
-  titleIn.value = '';
-  urlIn.value = '';
-  save();
-  renderResources();
 }
-document.getElementById('r-add').addEventListener('click', addResource);
-document.getElementById('r-title').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
-document.getElementById('r-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') addResource(); });
+document.getElementById('add-resource-btn').addEventListener('click', showAddResourceForm);
 
 function escapeAttr(s) {
   return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
