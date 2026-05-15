@@ -843,6 +843,18 @@
   }
   footer.app-footer button:hover { color: var(--accent); }
 
+  /* ---- touch devices: no hover, so always show row controls ---- */
+  @media (hover: none) {
+    .topic .t-move,
+    .topic .t-edit,
+    .topic .remove { opacity: 0.7; }
+    .topic .t-move button:hover,
+    .topic .t-edit:hover,
+    .topic .remove:hover { opacity: 1; }
+    .resource .rdel { opacity: 0.6; }
+    .note .note-del { opacity: 0.6; }
+  }
+
   /* ---- mobile ---- */
   @media (max-width: 600px) {
     body { padding: 22px 14px 80px; }
