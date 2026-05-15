@@ -74,6 +74,74 @@
       'Globalisation',
       'The Digital Age',
     ]},
+    { era: 'Curiosities', timespan: 'rabbit holes I want to chase', topics: [
+      'Mongolian invasion',
+      'When slavery ended in the US',
+      'Societies that have gone extinct',
+      'Hidden histories',
+      "Earth's greatest mysteries",
+      'History of famous buildings (Eiffel Tower, Taj Mahal)',
+      'Major historical inventions',
+      'History of instruments',
+      'Music in the 70s',
+      'Hello Kitty origins',
+      'Canada history',
+    ]},
+  ];
+
+  // Skill domains added alongside History.
+  const SKILL_DOMAINS = [
+    {
+      id: 'k_practical',
+      emoji: '🛠️',
+      name: 'Practical Life',
+      topics: [
+        'Unclog a drain',
+        'Patch walls',
+        'Pick a lock',
+        'Tie useful knots',
+        'Types of knives',
+        'Types of pasta',
+        'Types of calendars',
+        'Make chili con carne',
+        'Herb identification',
+        'Latte art',
+        'Recycling (practical sorting)',
+        'Map reading symbols',
+        'Compass direction without a compass',
+      ],
+    },
+    {
+      id: 'k_tricks',
+      emoji: '🪄',
+      name: 'Party Tricks & Dexterity',
+      topics: [
+        'Magic / card tricks',
+        'Coin tricks',
+        'Paper aeroplane',
+        'Blow a bubble with gum',
+        'Click with left hand',
+        'Hand shadows',
+        'Different ways to whistle',
+        'Poker hands',
+      ],
+    },
+    {
+      id: 'k_codes',
+      emoji: '🔤',
+      name: 'Codes & Alphabets',
+      topics: [
+        'Morse code',
+        'NATO phonetic alphabet',
+        'Semaphore flag signals',
+        'Greek alphabet',
+        'Different language alphabets',
+        'Sign language basics',
+        'Shorthand writing',
+        'Runes & symbolic meanings',
+        'Periodic table song',
+      ],
+    },
   ];
 
   // Flat list with era + timespan baked into each topic, in display order.
@@ -107,16 +175,24 @@
   function apply(state) {
     if (!state || !Array.isArray(state.subject)) return;
 
-    // Collect any progress from the legacy era domains and from any existing
-    // History topics whose label is replaced by the new curriculum.
+    // Collect progress (and any user-added custom topics) from legacy era
+    // domains and from any existing History domain. Curriculum-named topics
+    // get matched by label so their progress is preserved; non-curriculum
+    // topics in History are treated as user-added and appended at the end.
+    const curriculumLabels = new Set(CURRICULUM.map(c => c.label));
     const progressByLabel = new Map();
+    const customHistoryTopics = [];
     for (const d of state.subject) {
       if (!d || !Array.isArray(d.topics)) continue;
       const isLegacyEra = LEGACY_ERA_IDS.includes(d.id);
       const isHistory = d.id === 's_history';
       if (!isLegacyEra && !isHistory) continue;
       for (const t of d.topics) {
-        if (hasProgress(t)) progressByLabel.set(t.label, t);
+        if (curriculumLabels.has(t.label)) {
+          if (hasProgress(t)) progressByLabel.set(t.label, t);
+        } else if (isHistory) {
+          customHistoryTopics.push(t);
+        }
       }
     }
 
@@ -127,14 +203,12 @@
     let hist = state.subject.find(d => d.id === 's_history');
     if (!hist) {
       hist = { id: 's_history', emoji: '🏛️', name: 'History', topics: [] };
-      // Insert at the front of subjects so chronology feels intentional.
       state.subject.unshift(hist);
     }
 
-    // Replace its topic list with the curriculum, preserving any matching
-    // progress from before. Each topic carries `era` + `timespan` for grouped
-    // rendering in the topic list.
-    hist.topics = CURRICULUM.map((entry, i) => {
+    // Rebuild from the curriculum (preserving matched progress), then append
+    // any custom topics the user added by hand.
+    const built = CURRICULUM.map((entry, i) => {
       const prior = progressByLabel.get(entry.label);
       return {
         id: 's_history_t' + i,
@@ -147,6 +221,27 @@
         resources: prior && Array.isArray(prior.resources) ? prior.resources : [],
       };
     });
+    hist.topics = built.concat(customHistoryTopics);
+
+    // Add any missing skill domains (Practical Life, Party Tricks, Codes).
+    if (!Array.isArray(state.skill)) state.skill = [];
+    const existingSkills = new Set(state.skill.map(d => d.id));
+    for (const def of SKILL_DOMAINS) {
+      if (existingSkills.has(def.id)) continue;
+      state.skill.push({
+        id: def.id,
+        emoji: def.emoji,
+        name: def.name,
+        topics: def.topics.map((label, i) => ({
+          id: def.id + '_t' + i,
+          label,
+          done: false,
+          comfort: 0,
+          notes: '',
+          resources: [],
+        })),
+      });
+    }
   }
 
   // Compute per-era stats from a topic list. Returns Map<eraName, {...}>.
@@ -187,5 +282,5 @@
     return { num: '', name: eraName };
   }
 
-  window.MyPathHistory = { apply, CURRICULUM, CURRICULUM_BY_ERA, eraStats, splitEra };
+  window.MyPathHistory = { apply, CURRICULUM, CURRICULUM_BY_ERA, SKILL_DOMAINS, eraStats, splitEra };
 })();
