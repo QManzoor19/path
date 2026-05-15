@@ -300,6 +300,26 @@
     line-height: 1;
     flex-shrink: 0;
   }
+  .topic-edit-btn {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+    align-self: flex-start;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .topic-edit-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(194,83,42,0.05);
+  }
+  body.dark .topic-edit-btn:hover { background: rgba(224,123,80,0.08); }
 
   /* cover preview in modals */
   .cover-preview {
@@ -1271,6 +1291,7 @@
         <h2 id="topic-name"></h2>
         <div class="topic-status" id="topic-status"></div>
       </div>
+      <button class="topic-edit-btn" id="topic-edit-btn" title="Edit topic">✎ edit</button>
     </div>
     <div class="panel" id="topic-comfort-panel">
       <h3>How comfortable are you with this?</h3>
@@ -1921,7 +1942,6 @@ function renderTopics() {
       ${badge}
       <span class="chev">›</span>
       <div class="t-drag" title="Drag to reorder" aria-label="Reorder">⋮⋮</div>
-      <button class="t-edit" title="Edit topic">✎</button>
       <button class="remove" title="Remove topic">×</button>
     `;
     if (!isSkill) {
@@ -1936,10 +1956,6 @@ function renderTopics() {
         renderOverall();
       });
     }
-    li.querySelector('.t-edit').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openTopicEditModal(t);
-    });
     li.querySelector('.remove').addEventListener('click', (e) => {
       e.stopPropagation();
       if (confirm(`Remove "${t.label}"? Its notes and resources will be deleted too.`)) {
@@ -1952,7 +1968,6 @@ function renderTopics() {
     li.addEventListener('click', (e) => {
       if (e.target.closest('.remove')) return;
       if (e.target.closest('.t-drag')) return;
-      if (e.target.closest('.t-edit')) return;
       if (e.target.closest('.label-input')) return;
       if (li.classList.contains('editing')) return;
       if (e.target.dataset.act === 'check') return;
@@ -2462,6 +2477,10 @@ function closeTopicAndDetail() {
 }
 
 document.getElementById('topic-back').addEventListener('click', closeTopic);
+document.getElementById('topic-edit-btn').addEventListener('click', () => {
+  const t = getTopic();
+  if (t) openTopicEditModal(t);
+});
 MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v, barEl) => {
   const t = getTopic();
   if (!t) return;
