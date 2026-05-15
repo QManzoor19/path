@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Path" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<title>MyPath</title>
+<title>Path</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -910,7 +910,7 @@
 
   <header class="app-header">
     <div class="brand">
-      <h1>MyPath</h1>
+      <h1>Path</h1>
       <div class="tagline">A tracker for everything I'm learning.</div>
     </div>
     <div class="overall">
@@ -1015,7 +1015,7 @@
   </div>
 
   <footer class="app-footer">
-    <div class="footer-brand">MyPath / local-only</div>
+    <div class="footer-brand">Path / local-only</div>
     <div class="footer-actions">
       <button id="export-btn">Export</button>
       <button id="import-btn">Import</button>
@@ -1566,7 +1566,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'mypath-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'path-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
 });

@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Path" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>MyPath — quiet hours of learning</title>
+<title>Path — quiet hours of learning</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -983,7 +983,7 @@
 
   <header class="app-header">
     <div class="brand">
-      <h1>MyPath<span class="dot">.</span></h1>
+      <h1>Path<span class="dot">.</span></h1>
       <div class="tagline">Quiet hours of learning. One thing at a time.</div>
     </div>
     <div class="overall" id="overall">— learned</div>
@@ -1613,7 +1613,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'learnpath-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'path-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
 });

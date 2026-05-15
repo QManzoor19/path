@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Path" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<title>MyPath — learn fun stuff</title>
+<title>Path — learn fun stuff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -1034,7 +1034,7 @@
     <div class="brand">
       <div class="brand-mark">🌱</div>
       <div>
-        <h1>MyPath</h1>
+        <h1>Path</h1>
         <div class="tagline">hey — what do you want to learn today?</div>
       </div>
     </div>
@@ -1747,7 +1747,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'mypath-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'path-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
 });
