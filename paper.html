@@ -346,28 +346,44 @@
   .topic:hover .remove { opacity: 1; }
   .topic .remove:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
 
-  .topic .t-move {
+  .topic .t-drag {
+    width: 22px;
+    height: 28px;
     display: flex;
-    flex-direction: column;
-    gap: 1px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .topic:hover .t-move { opacity: 1; }
-  .topic .t-move button {
-    border: none;
-    background: transparent;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
     color: var(--ink-soft);
-    cursor: pointer;
-    padding: 0 4px;
-    font-size: 9px;
+    font-size: 18px;
     line-height: 1;
-    border-radius: 4px;
-    font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    flex-shrink: 0;
+    touch-action: none;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: -0.1em;
   }
-  .topic .t-move button:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
-  .topic .t-move button:disabled { opacity: 0.3; cursor: default; }
-  .topic .t-move button:disabled:hover { background: transparent; color: var(--ink-soft); }
+  .topic:hover .t-drag { opacity: 0.55; }
+  .topic .t-drag:hover { opacity: 1; background: rgba(194,83,42,0.08); color: var(--accent); }
+  .topic .t-drag:active { cursor: grabbing; }
+  .topic.dragging {
+    opacity: 0.55;
+    cursor: grabbing;
+    z-index: 100;
+    transform: rotate(-0.6deg);
+    box-shadow: 0 10px 32px rgba(60,40,20,0.18);
+  }
+  .topic-drop-placeholder {
+    border: 2px dashed var(--accent-soft);
+    background: rgba(194,83,42,0.05);
+    border-radius: 10px;
+    list-style: none;
+    pointer-events: none;
+    transition: height 0.15s;
+  }
 
   .topic .t-edit {
     border: none;
@@ -845,10 +861,10 @@
 
   /* ---- touch devices: no hover, so always show row controls ---- */
   @media (hover: none) {
-    .topic .t-move,
+    .topic .t-drag,
     .topic .t-edit,
-    .topic .remove { opacity: 0.7; }
-    .topic .t-move button:hover,
+    .topic .remove { opacity: 0.65; }
+    .topic .t-drag:active,
     .topic .t-edit:hover,
     .topic .remove:hover { opacity: 1; }
     .resource .rdel { opacity: 0.6; }
@@ -1221,17 +1237,12 @@ function renderTopics() {
     const ratingHtml = isSkill
       ? MyPathComfort.bar(comfort, 'sm')
       : `<div class="check" data-act="check"></div>`;
-    const isFirst = i === 0;
-    const isLast = i === d.topics.length - 1;
     li.innerHTML = `
       ${ratingHtml}
       <div class="label">${escapeHtml(t.label)}</div>
       ${badge}
       <span class="chev">›</span>
-      <div class="t-move">
-        <button class="t-up" title="Move up" ${isFirst ? 'disabled' : ''}>▲</button>
-        <button class="t-down" title="Move down" ${isLast ? 'disabled' : ''}>▼</button>
-      </div>
+      <div class="t-drag" title="Drag to reorder" aria-label="Reorder">⋮⋮</div>
       <button class="t-edit" title="Edit name">✎</button>
       <button class="remove" title="Remove topic">×</button>
     `;
@@ -1246,22 +1257,6 @@ function renderTopics() {
         renderOverall();
       });
     }
-    li.querySelector('.t-up').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const idx = d.topics.findIndex(x => x.id === t.id);
-      if (idx <= 0) return;
-      [d.topics[idx - 1], d.topics[idx]] = [d.topics[idx], d.topics[idx - 1]];
-      save();
-      renderTopics();
-    });
-    li.querySelector('.t-down').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const idx = d.topics.findIndex(x => x.id === t.id);
-      if (idx < 0 || idx >= d.topics.length - 1) return;
-      [d.topics[idx + 1], d.topics[idx]] = [d.topics[idx], d.topics[idx + 1]];
-      save();
-      renderTopics();
-    });
     li.querySelector('.t-edit').addEventListener('click', (e) => {
       e.stopPropagation();
       beginEditTopicLabel(li, t);
@@ -1277,7 +1272,7 @@ function renderTopics() {
     });
     li.addEventListener('click', (e) => {
       if (e.target.closest('.remove')) return;
-      if (e.target.closest('.t-move')) return;
+      if (e.target.closest('.t-drag')) return;
       if (e.target.closest('.t-edit')) return;
       if (e.target.closest('.label-input')) return;
       if (li.classList.contains('editing')) return;
@@ -1287,6 +1282,7 @@ function renderTopics() {
     });
     ul.appendChild(li);
   }
+  setupTopicDrag(ul, d);
   if (isSkill) {
     MyPathComfort.attachBars(ul, (v, barEl) => {
       const li = barEl.closest('.topic');
@@ -1307,6 +1303,165 @@ function renderTopics() {
   document.getElementById('d-progress').textContent =
     total === 0 ? 'no topics yet — add some below' : `avg ${avgC.toFixed(1)} / 10 across ${total} ${total === 1 ? 'topic' : 'topics'} · ${mastered} mastered`;
   document.getElementById('d-bar').style.width = pct + '%';
+}
+
+function setupTopicDrag(ul, d) {
+  let dragState = null;
+
+  const onPointerDown = (e) => {
+    const handle = e.target.closest('.t-drag');
+    if (!handle) return;
+    const li = handle.closest('.topic');
+    if (!li || !ul.contains(li)) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+
+    const rect = li.getBoundingClientRect();
+    dragState = {
+      pointerId: e.pointerId,
+      li,
+      tid: li.dataset.tid,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetY: e.clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+      left: rect.left,
+      entered: false,
+      placeholder: null,
+    };
+
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+    handle.addEventListener('pointercancel', onPointerCancel);
+  };
+
+  const enterDrag = () => {
+    if (!dragState || dragState.entered) return;
+    dragState.entered = true;
+    const { li, height, width, left } = dragState;
+    const placeholder = document.createElement('li');
+    placeholder.className = 'topic-drop-placeholder';
+    placeholder.style.height = height + 'px';
+    li.parentNode.insertBefore(placeholder, li.nextSibling);
+    dragState.placeholder = placeholder;
+    li.classList.add('dragging');
+    li.style.position = 'fixed';
+    li.style.left = left + 'px';
+    li.style.width = width + 'px';
+    li.style.top = (dragState.startY - dragState.offsetY) + 'px';
+    document.body.style.cursor = 'grabbing';
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    e.preventDefault();
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (!dragState.entered) {
+      if (Math.abs(dx) + Math.abs(dy) > 5) enterDrag();
+      else return;
+    }
+    // move floating element
+    dragState.li.style.top = (e.clientY - dragState.offsetY) + 'px';
+
+    // find new drop position
+    const candidates = Array.from(ul.children).filter((c) =>
+      c !== dragState.li && c !== dragState.placeholder
+    );
+    let dropBefore = null;
+    for (const target of candidates) {
+      const r = target.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (e.clientY < mid) { dropBefore = target; break; }
+    }
+    if (dropBefore) {
+      if (dragState.placeholder.nextSibling !== dropBefore) {
+        ul.insertBefore(dragState.placeholder, dropBefore);
+      }
+    } else {
+      if (ul.lastChild !== dragState.placeholder) {
+        ul.appendChild(dragState.placeholder);
+      }
+    }
+
+    // auto-scroll near viewport edges
+    const margin = 60;
+    const vh = window.innerHeight;
+    if (e.clientY < margin) window.scrollBy(0, -8);
+    else if (e.clientY > vh - margin) window.scrollBy(0, 8);
+  };
+
+  const cleanup = () => {
+    if (!dragState) return;
+    const { handle } = dragState;
+    handle.removeEventListener('pointermove', onPointerMove);
+    handle.removeEventListener('pointerup', onPointerUp);
+    handle.removeEventListener('pointercancel', onPointerCancel);
+    document.body.style.cursor = '';
+    dragState = null;
+  };
+
+  const onPointerCancel = () => {
+    if (!dragState) return cleanup();
+    if (dragState.entered) {
+      dragState.li.style.cssText = '';
+      dragState.li.classList.remove('dragging');
+      if (dragState.placeholder && dragState.placeholder.parentNode) {
+        dragState.placeholder.parentNode.removeChild(dragState.placeholder);
+      }
+    }
+    cleanup();
+  };
+
+  const onPointerUp = (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    if (!dragState.entered) { cleanup(); return; }
+    const { li, tid, placeholder } = dragState;
+
+    // count non-dragging topic <li>s before placeholder
+    let targetIdx = 0;
+    for (let i = 0; i < ul.children.length; i++) {
+      const child = ul.children[i];
+      if (child === placeholder) break;
+      if (child.classList.contains('topic') && !child.classList.contains('dragging')) {
+        targetIdx++;
+      }
+    }
+
+    const oldIdx = d.topics.findIndex(x => x.id === tid);
+    if (oldIdx !== -1) {
+      const [item] = d.topics.splice(oldIdx, 1);
+      const insertAt = Math.min(targetIdx, d.topics.length);
+      d.topics.splice(insertAt, 0, item);
+      // Inherit era from the neighbor above (or below if at top) so the
+      // section the topic was dropped into stays visually coherent.
+      if (item.era !== undefined) {
+        const prev = insertAt > 0 ? d.topics[insertAt - 1] : null;
+        const next = insertAt < d.topics.length - 1 ? d.topics[insertAt + 1] : null;
+        if (prev && prev.era) {
+          item.era = prev.era;
+          item.timespan = prev.timespan;
+        } else if (next && next.era) {
+          item.era = next.era;
+          item.timespan = next.timespan;
+        }
+      }
+      save();
+    }
+
+    // teardown visuals before re-render
+    li.style.cssText = '';
+    li.classList.remove('dragging');
+    if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+    cleanup();
+    renderTopics();
+  };
+
+  ul.addEventListener('pointerdown', onPointerDown);
 }
 
 function beginEditTopicLabel(li, topic) {
