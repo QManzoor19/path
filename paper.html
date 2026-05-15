@@ -24,10 +24,35 @@
     --accent-soft: #e8a583;
     --done: #5c8a3a;
     --card: #fbf6ec;
+    --input-bg: #ffffff;
+    --modal-backdrop: rgba(42, 37, 32, 0.4);
     --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 20px rgba(60,40,20,0.06);
     --cf-empty: #e6dcc7;
     --cf-on: #c2532a;
     --cf-hover: #e8a583;
+    color-scheme: light;
+  }
+  body.dark {
+    --bg: #1a1510;
+    --bg-2: #221c15;
+    --ink: #f0e7d5;
+    --ink-soft: #a89a85;
+    --line: #3a3128;
+    --accent: #e07b50;
+    --accent-soft: #c2532a;
+    --done: #88c160;
+    --card: #221c15;
+    --input-bg: #1a1510;
+    --modal-backdrop: rgba(0, 0, 0, 0.6);
+    --shadow: 0 1px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --cf-empty: #3a3128;
+    --cf-on: #e07b50;
+    --cf-hover: #f0a07a;
+    color-scheme: dark;
+  }
+  body.dark { background-image:
+    radial-gradient(circle at 10% 10%, rgba(224,123,80,0.08), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(136,193,96,0.06), transparent 45%);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -218,7 +243,7 @@
   .card.has-cover .name { color: white; }
   .card.has-cover .meta { color: rgba(255,255,255,0.85); }
   .card.has-cover .bar { background: rgba(255,255,255,0.25); }
-  .card.has-cover .bar > span { background: white; }
+  .card.has-cover .bar > span { background: #ffffff; }
   .card.has-cover .del,
   .card.has-cover .edit { color: white; }
   .card .edit {
@@ -826,7 +851,7 @@
     border-radius: 8px;
     font-family: inherit;
     font-size: 14px;
-    background: white;
+    background: var(--input-bg);
     color: var(--ink);
     outline: none;
     min-width: 0;
@@ -897,7 +922,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(42, 37, 32, 0.4);
+    background: var(--modal-backdrop);
     backdrop-filter: blur(2px);
     align-items: center;
     justify-content: center;
@@ -936,7 +961,8 @@
     border-radius: 8px;
     font-family: inherit;
     font-size: 14px;
-    background: white;
+    background: var(--input-bg);
+    color: var(--ink);
     margin-bottom: 14px;
     outline: none;
   }
@@ -1128,6 +1154,7 @@
   </div>
 
   <footer class="app-footer">
+    <button id="theme-toggle" title="Toggle dark mode"><span id="theme-icon">🌙</span> <span id="theme-label">dark mode</span></button> &nbsp;·&nbsp;
     <button id="export-btn">export</button> &nbsp;·&nbsp;
     <button id="import-btn">import</button> &nbsp;·&nbsp;
     <button id="reset-btn">reset all</button>
@@ -1244,6 +1271,27 @@ const EMOJIS = ['📚','🧠','📈','🏛️','🪶','🔬','🌍','🧪','💻
 
 /* ---------- state ---------- */
 const KEY = 'learnpath:v1';
+const THEME_KEY = 'path:theme';
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('dark', isDark);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', isDark ? '#1a1510' : '#f5efe6');
+  const icon = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  if (icon) icon.textContent = isDark ? '☀' : '🌙';
+  if (label) label.textContent = isDark ? 'light mode' : 'dark mode';
+}
+(function initTheme() {
+  let theme = null;
+  try { theme = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (theme !== 'dark' && theme !== 'light') {
+    theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  applyTheme(theme);
+})();
+
 let state = load();
 
 function load() {
@@ -2192,6 +2240,12 @@ document.getElementById('te-name').addEventListener('keydown', (e) => {
 });
 
 /* ---------- footer actions ---------- */
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const isDark = document.body.classList.contains('dark');
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+});
 document.getElementById('reset-btn').addEventListener('click', () => {
   if (confirm('Reset everything back to the starter list? Your custom additions and progress will be lost.')) {
     state = seed();
