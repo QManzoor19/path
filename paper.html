@@ -520,85 +520,185 @@
     font-weight: 500;
   }
 
-  .notes-area {
+  /* notes — multi-card */
+  .notes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .note {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px 10px;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .note:hover { border-color: var(--accent-soft); }
+  .note-text {
     width: 100%;
-    min-height: 140px;
+    min-height: 56px;
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 15px;
-    line-height: 1.6;
+    font-size: 14.5px;
+    line-height: 1.55;
     color: var(--ink);
     resize: vertical;
     outline: none;
     padding: 0;
+    display: block;
   }
-  .notes-area::placeholder { color: var(--ink-soft); opacity: 0.7; }
-  .notes-saved {
+  .note-text::placeholder { color: var(--ink-soft); opacity: 0.65; font-style: italic; }
+  .note-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    gap: 8px;
+  }
+  .note-time {
     font-size: 11px;
     color: var(--ink-soft);
-    margin-top: 6px;
+    opacity: 0.75;
+    font-feature-settings: "tnum";
+  }
+  .note-saved {
+    font-size: 11px;
+    color: var(--done);
     opacity: 0;
     transition: opacity 0.3s;
+    margin-left: auto;
   }
-  .notes-saved.show { opacity: 1; }
+  .note-saved.show { opacity: 0.7; }
+  .note-del {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    opacity: 0;
+    font-family: inherit;
+  }
+  .note:hover .note-del { opacity: 0.7; }
+  .note-del:hover { background: rgba(194,83,42,0.1); color: var(--accent); opacity: 1 !important; }
+  .notes-empty {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 4px 0 14px;
+  }
+  .add-note-btn {
+    border: 1.5px dashed var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .add-note-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(194,83,42,0.04); }
 
+  /* resources — nicer cards */
   .resources {
     list-style: none;
     padding: 0;
     margin: 0 0 14px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   .resource {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 14px;
+    padding: 12px 14px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--bg);
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    position: relative;
   }
-  .resource:hover { border-color: var(--accent-soft); }
-  .resource .rtype { font-size: 18px; flex-shrink: 0; }
+  .resource:hover {
+    border-color: var(--accent-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(60,40,20,0.06);
+  }
+  .resource .rtype {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    background: var(--rtype-bg, rgba(194,83,42,0.1));
+    border: 1px solid var(--line);
+  }
+  .resource[data-rtype="link"]    .rtype { --rtype-bg: rgba(150,150,150,0.12); }
+  .resource[data-rtype="article"] .rtype { --rtype-bg: rgba(76,134,193,0.15); }
+  .resource[data-rtype="video"]   .rtype { --rtype-bg: rgba(220,80,80,0.15); }
+  .resource[data-rtype="book"]    .rtype { --rtype-bg: rgba(92,138,58,0.18); }
+  .resource[data-rtype="course"]  .rtype { --rtype-bg: rgba(146,108,196,0.18); }
+  .resource[data-rtype="podcast"] .rtype { --rtype-bg: rgba(212,144,82,0.20); }
+  .resource[data-rtype="note"]    .rtype { --rtype-bg: rgba(232,200,82,0.25); }
+
   .resource .rbody { flex: 1; min-width: 0; }
   .resource .rtitle {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--ink);
     text-decoration: none;
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: -0.005em;
   }
-  .resource .rtitle:hover { color: var(--accent); text-decoration: underline; }
+  .resource .rtitle:hover { color: var(--accent); }
   .resource .rurl {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--ink-soft);
+    margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-feature-settings: "tnum";
+    letter-spacing: 0.01em;
   }
+  .resource .rurl .rurl-go {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.5;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .resource:hover .rurl-go { opacity: 1; transform: translateX(2px); }
   .resource .rdel {
     border: none;
     background: transparent;
     color: var(--ink-soft);
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px 8px;
     border-radius: 6px;
     opacity: 0;
     font-size: 14px;
+    font-family: inherit;
   }
-  .resource:hover .rdel { opacity: 1; }
-  .resource .rdel:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+  .resource:hover .rdel { opacity: 0.7; }
+  .resource .rdel:hover { background: rgba(194,83,42,0.1); color: var(--accent); opacity: 1; }
   .resources-empty {
     font-size: 13px;
     color: var(--ink-soft);
     font-style: italic;
-    padding: 8px 0 14px;
+    padding: 4px 0 14px;
   }
 
   .add-resource {
@@ -761,7 +861,7 @@
     .topic-title-row h2 { font-size: 24px; }
     /* iOS: input font-size >= 16px prevents zoom-on-focus */
     .add-topic input, .add-resource input, .add-resource select,
-    .notes-area, .modal input { font-size: 16px; }
+    .note-text, .modal input { font-size: 16px; }
   }
 </style>
 </head>
@@ -831,9 +931,10 @@
     </div>
 
     <div class="panel">
-      <h3>📝 Notes</h3>
-      <textarea class="notes-area" id="topic-notes" placeholder="Jot down what you're learning, key ideas, questions, anything..."></textarea>
-      <div class="notes-saved" id="notes-saved">saved</div>
+      <h3>📝 Notes <span class="pcount" id="ncount"></span></h3>
+      <ul class="notes-list" id="notes-list"></ul>
+      <div class="notes-empty" id="notes-empty">No notes yet — capture a thought below.</div>
+      <button class="add-note-btn" id="add-note-btn">+ Add note</button>
     </div>
 
     <div class="panel">
@@ -1256,8 +1357,8 @@ function openTopic(kind, domainId, topicId) {
     `<a id="crumb-home">All</a><span class="sep">›</span><a id="crumb-domain">${escapeHtml(d.emoji)} ${escapeHtml(d.name)}</a><span class="sep">›</span>${escapeHtml(t.label)}`;
   document.getElementById('crumb-home').addEventListener('click', closeTopicAndDetail);
   document.getElementById('crumb-domain').addEventListener('click', closeTopic);
-  document.getElementById('topic-notes').value = t.notes || '';
   renderTopicState();
+  renderNotes();
   renderResources();
   window.scrollTo(0, 0);
 }
@@ -1275,6 +1376,26 @@ function renderTopicState() {
   else if (comfort < 7) status.textContent = 'getting comfortable';
   else status.textContent = 'almost there';
   document.getElementById('topic-comfort').innerHTML = MyPathComfort.bar(comfort, 'lg');
+}
+
+function urlDomain(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); }
+  catch (e) { return url || ''; }
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 30) return 'just now';
+  if (sec < 60) return sec + 's ago';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return min + 'm ago';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + 'h ago';
+  const day = Math.floor(hr / 24);
+  if (day < 7) return day + 'd ago';
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 function renderResources() {
@@ -1295,26 +1416,115 @@ function renderResources() {
   for (const r of list) {
     const li = document.createElement('li');
     li.className = 'resource';
+    li.dataset.rtype = r.type || 'link';
     const icon = R_ICONS[r.type] || '🔗';
+    const domain = r.url ? urlDomain(r.url) : '';
     const titleHtml = r.url
-      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title || r.url)}</a>`
+      ? `<a class="rtitle" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title || domain || r.url)}</a>`
       : `<span class="rtitle">${escapeHtml(r.title || '(untitled)')}</span>`;
+    const urlHtml = r.url
+      ? `<div class="rurl">${escapeHtml(domain)}<span class="rurl-go">↗</span></div>`
+      : '';
     li.innerHTML = `
       <span class="rtype">${icon}</span>
       <div class="rbody">
         ${titleHtml}
-        ${r.url ? `<div class="rurl">${escapeHtml(r.url)}</div>` : ''}
+        ${urlHtml}
       </div>
       <button class="rdel" title="Remove">×</button>
     `;
     li.querySelector('.rdel').addEventListener('click', () => {
+      if (!confirm('Remove this resource?')) return;
       t.resources = t.resources.filter(x => x.id !== r.id);
       save();
       renderResources();
-      // refresh resource count badge on the domain page when we go back
     });
     ul.appendChild(li);
   }
+}
+
+/* ---------- multi-note rendering ---------- */
+function renderNotes() {
+  if (!currentTopic) return;
+  const t = getTopic();
+  if (!t) return;
+  if (!Array.isArray(t.notesList)) t.notesList = [];
+  // One-time migration: legacy single t.notes string → first item in notesList.
+  if (t.notes && typeof t.notes === 'string' && t.notes.trim()) {
+    t.notesList.unshift({
+      id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      text: t.notes,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    t.notes = '';
+    save();
+  }
+  const ul = document.getElementById('notes-list');
+  const empty = document.getElementById('notes-empty');
+  const count = document.getElementById('ncount');
+  ul.innerHTML = '';
+  const notes = t.notesList.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  count.textContent = notes.length ? notes.length : '';
+  empty.style.display = notes.length ? 'none' : 'block';
+  for (const n of notes) {
+    const li = document.createElement('li');
+    li.className = 'note';
+    li.dataset.nid = n.id;
+    li.innerHTML = `
+      <textarea class="note-text" placeholder="Write your thought...">${escapeHtml(n.text || '')}</textarea>
+      <div class="note-meta">
+        <span class="note-time">${escapeHtml(timeAgo(n.updatedAt || n.createdAt))}</span>
+        <span class="note-saved">saved</span>
+        <button class="note-del" title="Delete note">delete</button>
+      </div>
+    `;
+    const ta = li.querySelector('.note-text');
+    // auto-resize textarea to fit content
+    const resize = () => { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; };
+    requestAnimationFrame(resize);
+    let timer = null;
+    ta.addEventListener('input', () => {
+      resize();
+      const note = t.notesList.find(x => x.id === n.id);
+      if (!note) return;
+      note.text = ta.value;
+      note.updatedAt = Date.now();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        save();
+        const saved = li.querySelector('.note-saved');
+        saved.classList.add('show');
+        setTimeout(() => saved.classList.remove('show'), 1000);
+        li.querySelector('.note-time').textContent = timeAgo(note.updatedAt);
+      }, 400);
+    });
+    li.querySelector('.note-del').addEventListener('click', () => {
+      if (!confirm('Delete this note?')) return;
+      t.notesList = t.notesList.filter(x => x.id !== n.id);
+      save();
+      renderNotes();
+    });
+    ul.appendChild(li);
+  }
+}
+
+function addNote() {
+  const t = getTopic();
+  if (!t) return;
+  if (!Array.isArray(t.notesList)) t.notesList = [];
+  const note = {
+    id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    text: '',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  t.notesList.unshift(note);
+  save();
+  renderNotes();
+  // focus the new note's textarea
+  const firstNoteTa = document.querySelector('#notes-list .note-text');
+  if (firstNoteTa) firstNoteTa.focus();
 }
 
 function getTopic() {
@@ -1355,20 +1565,7 @@ MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v) => 
   renderTopicState();
 });
 
-/* notes autosave (debounced) */
-let notesTimer = null;
-document.getElementById('topic-notes').addEventListener('input', (e) => {
-  const t = getTopic();
-  if (!t) return;
-  t.notes = e.target.value;
-  if (notesTimer) clearTimeout(notesTimer);
-  notesTimer = setTimeout(() => {
-    save();
-    const saved = document.getElementById('notes-saved');
-    saved.classList.add('show');
-    setTimeout(() => saved.classList.remove('show'), 1200);
-  }, 400);
-});
+document.getElementById('add-note-btn').addEventListener('click', addNote);
 
 /* add resource */
 function addResource() {
