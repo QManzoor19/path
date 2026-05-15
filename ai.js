@@ -46,7 +46,7 @@
 
     .mp-input-area { padding: 12px 14px 14px; border-top: 1px solid var(--mp-line); flex-shrink: 0; }
     .mp-input-row { display: flex; gap: 8px; align-items: flex-end; }
-    .mp-input { flex: 1; resize: none; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--mp-line); font: inherit; font-size: 14px; outline: none; background: var(--mp-input-bg); color: var(--mp-fg); min-height: 40px; max-height: 140px; line-height: 1.4; transition: border-color 0.15s; }
+    .mp-input { flex: 1; resize: none; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--mp-line); font: inherit; font-size: 16px; outline: none; background: var(--mp-input-bg); color: var(--mp-fg); min-height: 40px; max-height: 140px; line-height: 1.4; transition: border-color 0.15s; }
     .mp-input:focus { border-color: var(--mp-accent); }
     .mp-send { padding: 10px 16px; border: none; cursor: pointer; font: inherit; font-weight: 500; font-size: 14px; height: 40px; }
     .mp-send:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -58,7 +58,7 @@
     .mp-modal { padding: 24px; max-width: 440px; width: 100%; border-radius: 16px; background: var(--mp-bg); color: var(--mp-fg); border: 1px solid var(--mp-line); font-family: inherit; }
     .mp-modal h3 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
     .mp-modal p { font-size: 13px; opacity: 0.75; margin: 0 0 14px; line-height: 1.5; }
-    .mp-modal input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--mp-line); font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--mp-input-bg); color: var(--mp-fg); margin-bottom: 8px; outline: none; }
+    .mp-modal input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--mp-line); font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; background: var(--mp-input-bg); color: var(--mp-fg); margin-bottom: 8px; outline: none; }
     .mp-modal input:focus { border-color: var(--mp-accent); }
     .mp-modal .hint { font-size: 11px; opacity: 0.6; margin: 0 0 16px; line-height: 1.5; }
     .mp-modal .hint a { color: var(--mp-accent); }

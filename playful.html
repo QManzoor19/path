@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#ff8a5c" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
 <title>MyPath — learn fun stuff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1008,6 +1011,14 @@
     .card .emoji { font-size: 38px; }
     .card .name { font-size: 17px; }
     .detail-head .demoji-wrap { width: 64px; height: 64px; font-size: 36px; }
+    .topic { padding: 12px 14px; column-gap: 10px; row-gap: 8px; }
+    .topic .t-icon { width: 44px; height: 44px; font-size: 22px; box-shadow: 2px 2px 0 var(--ink); }
+    .topic .label { font-size: 15px; min-width: 0; }
+    .topic .chev { display: none; }
+    .topic .remove { width: 24px; height: 24px; }
+    .panel { padding: 16px; }
+    .add-resource input, .add-resource select, .add-topic input,
+    .notes-area, .modal input { font-size: 16px; }
   }
 </style>
 </head>
