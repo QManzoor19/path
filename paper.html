@@ -413,22 +413,22 @@
   /* drag handle for domain cards (visible in edit mode) */
   .card-drag {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 24px;
-    height: 24px;
+    top: 6px;
+    left: 6px;
+    width: 32px;
+    height: 32px;
     align-items: center;
     justify-content: center;
     cursor: grab;
     color: var(--ink-soft);
     font-weight: 700;
-    font-size: 16px;
+    font-size: 18px;
     letter-spacing: -0.1em;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
     display: none;
-    border-radius: 6px;
+    border-radius: 8px;
     z-index: 3;
     background: transparent;
     border: none;
@@ -2399,33 +2399,17 @@ function renderGrid(kind) {
     totalTopics === 0 ? '' : `${totalMastered} mastered · ${totalTopics} ${totalTopics === 1 ? 'topic' : 'topics'}`;
 }
 
-/* Drag handle pointer-events reorder for domain cards within a grid. */
+/* Drag handle pointer-events reorder for domain cards within a grid.
+   Listener is attached to the grid once; pointermove/up/cancel go on
+   document so they fire even if pointer capture failed (which happens
+   on some touch devices). */
 function setupDomainDrag(grid, kind) {
+  if (grid._dragSetup) return;
+  grid._dragSetup = true;
+
   let drag = null;
-  const onDown = (e) => {
-    const handle = e.target.closest('.card-drag');
-    if (!handle) return;
-    const card = handle.closest('.card');
-    if (!card || !grid.contains(card)) return;
-    if (e.button !== undefined && e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
-    const r = card.getBoundingClientRect();
-    drag = {
-      pointerId: e.pointerId, card, kind, handle,
-      did: card.dataset.id,
-      startX: e.clientX, startY: e.clientY,
-      offsetX: e.clientX - r.left, offsetY: e.clientY - r.top,
-      width: r.width, height: r.height,
-      left: r.left, top: r.top,
-      entered: false, placeholder: null,
-    };
-    handle.addEventListener('pointermove', onMove);
-    handle.addEventListener('pointerup', onUp);
-    handle.addEventListener('pointercancel', onCancel);
-  };
-  const enter = () => {
+
+  function enter() {
     if (!drag || drag.entered) return;
     drag.entered = true;
     const ph = document.createElement('div');
@@ -2439,9 +2423,11 @@ function setupDomainDrag(grid, kind) {
     drag.card.style.top = drag.top + 'px';
     drag.card.style.width = drag.width + 'px';
     document.body.style.cursor = 'grabbing';
-  };
-  const onMove = (e) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
+  }
+
+  function onMove(e) {
+    if (!drag) return;
+    if (e.pointerId !== drag.pointerId) return;
     e.preventDefault();
     if (!drag.entered) {
       const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
@@ -2450,7 +2436,6 @@ function setupDomainDrag(grid, kind) {
     }
     drag.card.style.left = (e.clientX - drag.offsetX) + 'px';
     drag.card.style.top  = (e.clientY - drag.offsetY) + 'px';
-    // find drop target using center proximity (works for grid)
     const candidates = Array.from(grid.children).filter(c =>
       c !== drag.card && c !== drag.placeholder
     );
@@ -2458,11 +2443,10 @@ function setupDomainDrag(grid, kind) {
     for (const c of candidates) {
       const cr = c.getBoundingClientRect();
       const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
-      const d = (cx - e.clientX) ** 2 + (cy - e.clientY) ** 2;
-      if (d < nearestDist) {
-        nearestDist = d;
+      const dist = (cx - e.clientX) ** 2 + (cy - e.clientY) ** 2;
+      if (dist < nearestDist) {
+        nearestDist = dist;
         nearest = c;
-        // insert before if cursor is left/above center, else after
         const before = (e.clientY < cy) || (Math.abs(e.clientY - cy) < cr.height/2 && e.clientX < cx);
         insertBefore = before ? c : c.nextSibling;
       }
@@ -2473,26 +2457,29 @@ function setupDomainDrag(grid, kind) {
     const margin = 60, vh = window.innerHeight;
     if (e.clientY < margin) window.scrollBy(0, -8);
     else if (e.clientY > vh - margin) window.scrollBy(0, 8);
-  };
-  const cleanup = () => {
-    if (!drag) return;
-    drag.handle.removeEventListener('pointermove', onMove);
-    drag.handle.removeEventListener('pointerup', onUp);
-    drag.handle.removeEventListener('pointercancel', onCancel);
+  }
+
+  function cleanup() {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onCancel);
     document.body.style.cursor = '';
     drag = null;
-  };
-  const onCancel = () => {
-    if (!drag) return cleanup();
+  }
+
+  function onCancel() {
+    if (!drag) { cleanup(); return; }
     if (drag.entered) {
       drag.card.style.cssText = '';
       drag.card.classList.remove('card-dragging');
       if (drag.placeholder && drag.placeholder.parentNode) drag.placeholder.remove();
     }
     cleanup();
-  };
-  const onUp = (e) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
+  }
+
+  function onUp(e) {
+    if (!drag) return;
+    if (e.pointerId !== drag.pointerId) return;
     if (!drag.entered) { cleanup(); return; }
     const { card, did, placeholder } = drag;
     let targetIdx = 0;
@@ -2515,8 +2502,30 @@ function setupDomainDrag(grid, kind) {
     if (placeholder && placeholder.parentNode) placeholder.remove();
     cleanup();
     render();
-  };
-  grid.addEventListener('pointerdown', onDown);
+  }
+
+  grid.addEventListener('pointerdown', (e) => {
+    const handle = e.target.closest('.card-drag');
+    if (!handle) return;
+    const card = handle.closest('.card');
+    if (!card || !grid.contains(card)) return;
+    if (e.button !== undefined && e.button > 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const r = card.getBoundingClientRect();
+    drag = {
+      pointerId: e.pointerId, card, kind,
+      did: card.dataset.id,
+      startX: e.clientX, startY: e.clientY,
+      offsetX: e.clientX - r.left, offsetY: e.clientY - r.top,
+      width: r.width, height: r.height,
+      left: r.left, top: r.top,
+      entered: false, placeholder: null,
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onCancel);
+  });
 }
 
 function renderOverall() {
