@@ -98,6 +98,82 @@
     border-radius: 999px;
   }
   .overall b { color: var(--ink); font-weight: 700; }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .search-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--ink-soft);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .search-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* search modal */
+  .search-bg .modal {
+    max-width: 540px;
+    padding: 18px;
+  }
+  .search-modal input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 16px;
+    background: var(--input-bg);
+    color: var(--ink);
+    outline: none;
+    margin: 0;
+  }
+  .search-results {
+    margin-top: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: background 0.1s, border-color 0.1s;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .search-result:hover, .search-result.focused {
+    background: var(--bg);
+    border-color: var(--accent-soft);
+  }
+  .search-result .sr-icon { font-size: 16px; flex-shrink: 0; }
+  .search-result .sr-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .search-result .sr-meta { color: var(--ink-soft); font-size: 12px; flex-shrink: 0; }
+  .search-empty {
+    padding: 16px 12px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+  }
 
   /* ---- title letter bounce-in ---- */
   header.app-header h1 .ltr {
@@ -317,17 +393,63 @@
     color: var(--ink-soft);
     cursor: pointer;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.15s;
     border-radius: 6px;
     font-size: 12px;
     z-index: 2;
     font-family: inherit;
   }
-  .card:hover .edit { opacity: 1; }
+  .card .del { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+  body.edit-mode .card .edit,
+  body.edit-mode .card .del { opacity: 1; pointer-events: auto; }
+  body.edit-mode .card.has-cover .edit,
+  body.edit-mode .card.has-cover .del { color: white; }
+  body.edit-mode .card { cursor: default; }
+  body.edit-mode .card-drag { display: flex; }
   .card .edit:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
   .card.has-cover:hover .edit { background: rgba(255,255,255,0.15); color: white; }
-  @media (hover: none) {
-    .card .edit, .card .del { opacity: 0.85; }
+
+  /* drag handle for domain cards (visible in edit mode) */
+  .card-drag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--ink-soft);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.1em;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    display: none;
+    border-radius: 6px;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+  }
+  .card-drag:hover { background: rgba(194,83,42,0.1); color: var(--accent); }
+  .card-drag:active { cursor: grabbing; }
+  .card.has-cover .card-drag { color: white; }
+  .card.card-dragging {
+    opacity: 0.55;
+    z-index: 100;
+    cursor: grabbing;
+    transform: rotate(-0.6deg);
+    box-shadow: 0 10px 32px rgba(60,40,20,0.18);
+  }
+  .card-drop-placeholder {
+    border: 2px dashed var(--accent-soft);
+    background: rgba(194,83,42,0.05);
+    border-radius: 16px;
+    list-style: none;
+    pointer-events: none;
   }
 
   /* topic icon (in row) */
@@ -553,7 +675,24 @@
     background: linear-gradient(135deg, rgba(194,83,42,0.08), rgba(194,83,42,0.02));
     border: 1px solid rgba(194,83,42,0.20);
     border-radius: 14px;
+    position: relative;
   }
+  .working-on .wo-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+  .working-on .wo-close:hover { background: rgba(194,83,42,0.15); color: var(--accent); }
   body.dark .working-on {
     background: linear-gradient(135deg, rgba(224,123,80,0.12), rgba(224,123,80,0.03));
     border-color: rgba(224,123,80,0.25);
@@ -1291,6 +1430,17 @@
   .size-chip:hover { border-color: var(--accent-soft); }
   .size-chip.selected { border-color: var(--accent); background: rgba(194,83,42,0.06); color: var(--accent); }
   body.dark .size-chip.selected { background: rgba(224,123,80,0.10); }
+  .pref-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 6px 0;
+  }
+  .pref-toggle input { width: auto; margin: 0; }
 
   /* ---- fun: paper grain ---- */
   body::after {
@@ -1398,12 +1548,24 @@
       <h1 id="brand-title"><span class="ltr">P</span><span class="ltr">a</span><span class="ltr">t</span><span class="ltr">h</span><span class="dot">.</span></h1>
       <div class="tagline" id="tagline">Everything I want to learn — one place to chip away at it.</div>
     </div>
-    <div class="overall" id="overall">— learned</div>
+    <div class="header-actions">
+      <button class="search-btn" id="search-btn" title="Search topics" aria-label="Search">🔍</button>
+      <div class="overall" id="overall">— learned</div>
+    </div>
   </header>
+
+<!-- SEARCH MODAL -->
+<div class="modal-bg search-bg" id="search-bg">
+  <div class="modal search-modal">
+    <input type="text" id="search-input" placeholder="Search topics, domains, notes..." autocomplete="off" />
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
 
   <!-- HOME VIEW -->
   <div class="home" id="home">
     <div class="working-on" id="working-on" style="display:none;">
+      <button class="wo-close" id="wo-close" title="Hide this section" aria-label="Hide">×</button>
       <h3>★ Working on now</h3>
       <ul id="working-on-list"></ul>
     </div>
@@ -1428,6 +1590,7 @@
     <div class="add-bar">
       <button class="add-btn add-subject" id="add-subject-btn"><span class="plus">+</span> add subject</button>
       <button class="add-btn add-skill" id="add-skill-btn"><span class="plus">+</span> add skill</button>
+      <button class="add-btn edit-mode-btn" id="edit-mode-btn"><span class="plus">✎</span> <span id="edit-mode-label">edit mode</span></button>
     </div>
   </div>
 
@@ -1497,6 +1660,8 @@
   <div class="chips" id="font-chips"></div>
   <h4 style="margin-top:14px;">Size</h4>
   <div class="size-row" id="size-chips"></div>
+  <h4 style="margin-top:14px;">Sections</h4>
+  <label class="pref-toggle"><input type="checkbox" id="wo-pref-toggle" /> <span>Show "Working on now"</span></label>
 </div>
 </div>
 
@@ -2134,10 +2299,15 @@ function render() {
   renderOverall();
 }
 
+const WO_PREF_KEY = 'path:workingOnVisible';
+function workingOnVisible() {
+  try { return localStorage.getItem(WO_PREF_KEY) !== 'off'; } catch (e) { return true; }
+}
 function renderWorkingOn() {
   const wrap = document.getElementById('working-on');
   const list = document.getElementById('working-on-list');
   if (!wrap || !list) return;
+  if (!workingOnVisible()) { wrap.style.display = 'none'; return; }
   const items = [];
   for (const kind of ['subject', 'skill']) {
     for (const d of state[kind]) {
@@ -2196,6 +2366,7 @@ function renderGrid(kind) {
     card.dataset.id = d.id;
     card.dataset.kind = kind;
     card.innerHTML = `
+      <button class="card-drag" title="Drag to reorder">⋮⋮</button>
       <button class="del" title="Remove">×</button>
       <button class="edit" title="Edit">✎</button>
       <div class="emoji">${d.emoji}</div>
@@ -2204,8 +2375,10 @@ function renderGrid(kind) {
       <div class="bar"><span style="width:${pct}%"></span></div>
     `;
     card.addEventListener('click', (e) => {
-      if (e.target.classList.contains('del')) return;
-      if (e.target.classList.contains('edit')) return;
+      if (e.target.closest('.del')) return;
+      if (e.target.closest('.edit')) return;
+      if (e.target.closest('.card-drag')) return;
+      if (document.body.classList.contains('edit-mode')) return;
       openDetail(kind, d.id);
     });
     card.querySelector('.edit').addEventListener('click', (e) => {
@@ -2221,8 +2394,129 @@ function renderGrid(kind) {
     });
     grid.appendChild(card);
   }
+  setupDomainDrag(grid, kind);
   document.getElementById('count-' + kind).textContent =
     totalTopics === 0 ? '' : `${totalMastered} mastered · ${totalTopics} ${totalTopics === 1 ? 'topic' : 'topics'}`;
+}
+
+/* Drag handle pointer-events reorder for domain cards within a grid. */
+function setupDomainDrag(grid, kind) {
+  let drag = null;
+  const onDown = (e) => {
+    const handle = e.target.closest('.card-drag');
+    if (!handle) return;
+    const card = handle.closest('.card');
+    if (!card || !grid.contains(card)) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+    const r = card.getBoundingClientRect();
+    drag = {
+      pointerId: e.pointerId, card, kind, handle,
+      did: card.dataset.id,
+      startX: e.clientX, startY: e.clientY,
+      offsetX: e.clientX - r.left, offsetY: e.clientY - r.top,
+      width: r.width, height: r.height,
+      left: r.left, top: r.top,
+      entered: false, placeholder: null,
+    };
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onCancel);
+  };
+  const enter = () => {
+    if (!drag || drag.entered) return;
+    drag.entered = true;
+    const ph = document.createElement('div');
+    ph.className = 'card-drop-placeholder';
+    ph.style.height = drag.height + 'px';
+    grid.insertBefore(ph, drag.card.nextSibling);
+    drag.placeholder = ph;
+    drag.card.classList.add('card-dragging');
+    drag.card.style.position = 'fixed';
+    drag.card.style.left = drag.left + 'px';
+    drag.card.style.top = drag.top + 'px';
+    drag.card.style.width = drag.width + 'px';
+    document.body.style.cursor = 'grabbing';
+  };
+  const onMove = (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    e.preventDefault();
+    if (!drag.entered) {
+      const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 5) enter();
+      else return;
+    }
+    drag.card.style.left = (e.clientX - drag.offsetX) + 'px';
+    drag.card.style.top  = (e.clientY - drag.offsetY) + 'px';
+    // find drop target using center proximity (works for grid)
+    const candidates = Array.from(grid.children).filter(c =>
+      c !== drag.card && c !== drag.placeholder
+    );
+    let nearest = null, nearestDist = Infinity, insertBefore = null;
+    for (const c of candidates) {
+      const cr = c.getBoundingClientRect();
+      const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+      const d = (cx - e.clientX) ** 2 + (cy - e.clientY) ** 2;
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = c;
+        // insert before if cursor is left/above center, else after
+        const before = (e.clientY < cy) || (Math.abs(e.clientY - cy) < cr.height/2 && e.clientX < cx);
+        insertBefore = before ? c : c.nextSibling;
+      }
+    }
+    if (nearest && drag.placeholder.nextSibling !== insertBefore && drag.placeholder !== insertBefore) {
+      grid.insertBefore(drag.placeholder, insertBefore);
+    }
+    const margin = 60, vh = window.innerHeight;
+    if (e.clientY < margin) window.scrollBy(0, -8);
+    else if (e.clientY > vh - margin) window.scrollBy(0, 8);
+  };
+  const cleanup = () => {
+    if (!drag) return;
+    drag.handle.removeEventListener('pointermove', onMove);
+    drag.handle.removeEventListener('pointerup', onUp);
+    drag.handle.removeEventListener('pointercancel', onCancel);
+    document.body.style.cursor = '';
+    drag = null;
+  };
+  const onCancel = () => {
+    if (!drag) return cleanup();
+    if (drag.entered) {
+      drag.card.style.cssText = '';
+      drag.card.classList.remove('card-dragging');
+      if (drag.placeholder && drag.placeholder.parentNode) drag.placeholder.remove();
+    }
+    cleanup();
+  };
+  const onUp = (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    if (!drag.entered) { cleanup(); return; }
+    const { card, did, placeholder } = drag;
+    let targetIdx = 0;
+    for (let i = 0; i < grid.children.length; i++) {
+      const child = grid.children[i];
+      if (child === placeholder) break;
+      if (child.classList.contains('card') && !child.classList.contains('card-dragging')) {
+        targetIdx++;
+      }
+    }
+    const arr = state[kind];
+    const oldIdx = arr.findIndex(x => x.id === did);
+    if (oldIdx !== -1) {
+      const [item] = arr.splice(oldIdx, 1);
+      arr.splice(Math.min(targetIdx, arr.length), 0, item);
+      save();
+    }
+    card.style.cssText = '';
+    card.classList.remove('card-dragging');
+    if (placeholder && placeholder.parentNode) placeholder.remove();
+    cleanup();
+    render();
+  };
+  grid.addEventListener('pointerdown', onDown);
 }
 
 function renderOverall() {
@@ -2831,6 +3125,105 @@ function closeTopicAndDetail() {
 
 document.getElementById('add-subject-btn').addEventListener('click', () => openModal('subject'));
 document.getElementById('add-skill-btn').addEventListener('click', () => openModal('skill'));
+document.getElementById('edit-mode-btn').addEventListener('click', () => {
+  const on = document.body.classList.toggle('edit-mode');
+  document.getElementById('edit-mode-label').textContent = on ? 'done' : 'edit mode';
+});
+
+/* ---------- search ---------- */
+function openSearch() {
+  document.getElementById('search-bg').classList.add('active');
+  const inp = document.getElementById('search-input');
+  inp.value = '';
+  renderSearchResults('');
+  setTimeout(() => inp.focus(), 50);
+}
+function closeSearch() {
+  document.getElementById('search-bg').classList.remove('active');
+}
+function renderSearchResults(q) {
+  const out = document.getElementById('search-results');
+  out.innerHTML = '';
+  const query = q.trim().toLowerCase();
+  if (!query) {
+    out.innerHTML = '<div class="search-empty">Start typing to search across all subjects, skills, and topics.</div>';
+    return;
+  }
+  const matches = [];
+  for (const kind of ['subject', 'skill']) {
+    for (const d of state[kind]) {
+      if (d.name.toLowerCase().includes(query)) {
+        matches.push({ kind, type: 'domain', d, score: d.name.toLowerCase().indexOf(query) === 0 ? 0 : 1 });
+      }
+      for (const t of d.topics) {
+        const lbl = (t.label || '').toLowerCase();
+        const notes = (t.notes || '').toLowerCase();
+        const notesList = Array.isArray(t.notesList) ? t.notesList.map(n => (n.text || '').toLowerCase()).join(' ') : '';
+        const hay = lbl + ' ' + notes + ' ' + notesList;
+        if (hay.includes(query)) {
+          matches.push({ kind, type: 'topic', d, t, score: lbl.indexOf(query) === 0 ? 2 : (lbl.includes(query) ? 3 : 4) });
+        }
+      }
+    }
+  }
+  matches.sort((a, b) => a.score - b.score);
+  if (matches.length === 0) {
+    out.innerHTML = '<div class="search-empty">No matches.</div>';
+    return;
+  }
+  for (const m of matches.slice(0, 50)) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'search-result';
+    if (m.type === 'domain') {
+      btn.innerHTML = `
+        <span class="sr-icon">${escapeHtml(m.d.emoji || '📁')}</span>
+        <span class="sr-label">${escapeHtml(m.d.name)}</span>
+        <span class="sr-meta">${m.kind}</span>
+      `;
+      btn.addEventListener('click', () => { closeSearch(); openDetail(m.kind, m.d.id); });
+    } else {
+      const icon = m.t.icon || m.d.emoji || '•';
+      btn.innerHTML = `
+        <span class="sr-icon">${escapeHtml(icon)}</span>
+        <span class="sr-label">${escapeHtml(m.t.label)}</span>
+        <span class="sr-meta">${escapeHtml(m.d.name)}</span>
+      `;
+      btn.addEventListener('click', () => { closeSearch(); currentDomain = { kind: m.kind, id: m.d.id }; openTopic(m.kind, m.d.id, m.t.id); });
+    }
+    out.appendChild(btn);
+  }
+}
+document.getElementById('search-btn').addEventListener('click', openSearch);
+
+/* working-on visibility */
+document.getElementById('wo-close').addEventListener('click', () => {
+  try { localStorage.setItem(WO_PREF_KEY, 'off'); } catch (e) {}
+  document.getElementById('working-on').style.display = 'none';
+  syncWorkingOnPref();
+});
+function syncWorkingOnPref() {
+  const cb = document.getElementById('wo-pref-toggle');
+  if (cb) cb.checked = workingOnVisible();
+}
+syncWorkingOnPref();
+document.getElementById('wo-pref-toggle').addEventListener('change', (e) => {
+  try { localStorage.setItem(WO_PREF_KEY, e.target.checked ? 'on' : 'off'); } catch (er) {}
+  renderWorkingOn();
+});
+document.getElementById('search-bg').addEventListener('click', (e) => {
+  if (e.target.id === 'search-bg') closeSearch();
+});
+document.getElementById('search-input').addEventListener('input', (e) => {
+  renderSearchResults(e.target.value);
+});
+document.getElementById('search-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeSearch();
+  else if (e.key === 'Enter') {
+    const first = document.querySelector('.search-result');
+    if (first) first.click();
+  }
+});
 document.getElementById('topic-back').addEventListener('click', closeTopic);
 document.getElementById('topic-edit-btn').addEventListener('click', () => {
   const t = getTopic();
