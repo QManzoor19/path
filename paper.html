@@ -1860,6 +1860,72 @@ function migrate(s) {
   }
   if (window.MyPathComfort) MyPathComfort.migrate(s);
   if (window.MyPathHistory) MyPathHistory.apply(s);
+  addNewSkeletonDomains(s);
+  tagScienceSubcategories(s);
+}
+
+/* New subject domains the user asked for — added once, never overwritten. */
+function addNewSkeletonDomains(state) {
+  if (!Array.isArray(state.subject)) state.subject = [];
+  const STUB = (domId, i, section) => ({
+    id: domId + '_t' + i,
+    label: 'add your first ' + section.toLowerCase() + ' topic',
+    era: section, timespan: '',
+    done: false, comfort: 0, notes: '', resources: [],
+  });
+  const defs = [
+    { id: 's_politics',   emoji: '🏛️', name: 'Politics',     topics: [] },
+    { id: 's_coding',     emoji: '💻', name: 'Coding',       topics: [] },
+    { id: 's_islam',      emoji: '☪️', name: 'Islam',        topics: [] },
+    { id: 's_maths',      emoji: '📐', name: 'Maths',        topics: [] },
+    { id: 's_languages',  emoji: '🌐', name: 'Languages',    topics: [] },
+    { id: 's_adulting',   emoji: '🏠', name: 'Adulting 101', topics: [] },
+    { id: 's_astronomy',  emoji: '🔭', name: 'Astronomy',    topics: [] },
+    { id: 's_earth',      emoji: '🌍', name: 'Earth Sciences', topics: [
+      STUB('s_earth', 0, 'Geography'),
+      STUB('s_earth', 1, 'Geology'),
+      STUB('s_earth', 2, 'Meteorology'),
+      STUB('s_earth', 3, 'Oceanography'),
+      STUB('s_earth', 4, 'Ecology'),
+    ]},
+  ];
+  const existing = new Set(state.subject.map(d => d.id));
+  for (const def of defs) {
+    if (!existing.has(def.id)) state.subject.push(def);
+  }
+}
+
+/* Tag the original Science topics with Physics / Chemistry / Biology /
+   Earth Science / Astronomy / Methodology eras so they render as
+   subcategory sections inside the Science domain. Idempotent. */
+function tagScienceSubcategories(state) {
+  const sci = state.subject && state.subject.find(d => d.id === 's_sci');
+  if (!sci || !Array.isArray(sci.topics)) return;
+  if (sci.topics.some(t => t.era)) return;
+  const norm = (s) => String(s || '').toLowerCase().replace(/[’']/g, "'");
+  const MAP = {
+    'scientific method':            'Methodology',
+    'atoms & elements':             'Chemistry',
+    'cell biology basics':          'Biology',
+    'evolution by natural selection':'Biology',
+    "newton's laws":                'Physics',
+    'thermodynamics':               'Physics',
+    'electromagnetism':             'Physics',
+    'plate tectonics':              'Earth Science',
+    'dna & genetics':               'Biology',
+    'quantum basics':               'Physics',
+    'big bang & cosmology':         'Astronomy',
+  };
+  for (const t of sci.topics) {
+    const era = MAP[norm(t.label)];
+    if (era) t.era = era;
+  }
+  const ORDER = ['Methodology', 'Physics', 'Chemistry', 'Biology', 'Earth Science', 'Astronomy'];
+  sci.topics.sort((a, b) => {
+    const ia = ORDER.indexOf(a.era || '');
+    const ib = ORDER.indexOf(b.era || '');
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
 }
 function seed() {
   const s = { subject: [], skill: [] };
