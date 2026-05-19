@@ -1895,33 +1895,48 @@ function addNewSkeletonDomains(state) {
   }
 }
 
-/* Tag the original Science topics with Physics / Chemistry / Biology /
-   Earth Science / Astronomy / Methodology eras so they render as
-   subcategory sections inside the Science domain. Idempotent. */
+/* Inside the Science domain, render Physics / Chemistry / Biology as
+   subcategory sections. Any topics that previously had Methodology,
+   Earth Science, or Astronomy eras get those tags stripped so those
+   sections disappear (the underlying topics stay — just move to the
+   top of the list without a section header). Idempotent. */
 function tagScienceSubcategories(state) {
   const sci = state.subject && state.subject.find(d => d.id === 's_sci');
   if (!sci || !Array.isArray(sci.topics)) return;
-  if (sci.topics.some(t => t.era)) return;
+
+  // Strip retired subcategory eras (Methodology / Earth Science / Astronomy)
+  const RETIRED = new Set(['Methodology', 'Earth Science', 'Astronomy']);
+  for (const t of sci.topics) {
+    if (t.era && RETIRED.has(t.era)) {
+      delete t.era;
+      delete t.timespan;
+    }
+  }
+
   const norm = (s) => String(s || '').toLowerCase().replace(/[’']/g, "'");
+  // Tag fresh topics with one of the three current subcategories
   const MAP = {
-    'scientific method':            'Methodology',
-    'atoms & elements':             'Chemistry',
-    'cell biology basics':          'Biology',
+    'atoms & elements':              'Chemistry',
+    'cell biology basics':           'Biology',
     'evolution by natural selection':'Biology',
-    "newton's laws":                'Physics',
-    'thermodynamics':               'Physics',
-    'electromagnetism':             'Physics',
-    'plate tectonics':              'Earth Science',
-    'dna & genetics':               'Biology',
-    'quantum basics':               'Physics',
-    'big bang & cosmology':         'Astronomy',
+    "newton's laws":                 'Physics',
+    'thermodynamics':                'Physics',
+    'electromagnetism':              'Physics',
+    'dna & genetics':                'Biology',
+    'quantum basics':                'Physics',
   };
   for (const t of sci.topics) {
+    if (t.era) continue; // already tagged
     const era = MAP[norm(t.label)];
     if (era) t.era = era;
   }
-  const ORDER = ['Methodology', 'Physics', 'Chemistry', 'Biology', 'Earth Science', 'Astronomy'];
+
+  // Sort: untagged topics first (no section header), then by ORDER
+  const ORDER = ['Physics', 'Chemistry', 'Biology'];
   sci.topics.sort((a, b) => {
+    const ae = a.era ? 1 : 0;
+    const be = b.era ? 1 : 0;
+    if (ae !== be) return ae - be;
     const ia = ORDER.indexOf(a.era || '');
     const ib = ORDER.indexOf(b.era || '');
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
