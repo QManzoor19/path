@@ -1861,6 +1861,7 @@ function migrate(s) {
   if (window.MyPathComfort) MyPathComfort.migrate(s);
   if (window.MyPathHistory) MyPathHistory.apply(s);
   addNewSkeletonDomains(s);
+  addSkeletonSkillDomains(s);
   tagScienceSubcategories(s);
 }
 
@@ -1892,6 +1893,37 @@ function addNewSkeletonDomains(state) {
   const existing = new Set(state.subject.map(d => d.id));
   for (const def of defs) {
     if (!existing.has(def.id)) state.subject.push(def);
+  }
+}
+
+/* New skill domains: Music + Painting (both with subcategory sections),
+   and Digital art (flat). Added once via idempotent migration. */
+function addSkeletonSkillDomains(state) {
+  if (!Array.isArray(state.skill)) state.skill = [];
+  const STUB = (domId, i, section) => ({
+    id: domId + '_t' + i,
+    label: 'add your first ' + section.toLowerCase() + ' topic',
+    era: section, timespan: '',
+    done: false, comfort: 0, notes: '', resources: [],
+  });
+  const defs = [
+    { id: 'k_music', emoji: '🎵', name: 'Music', topics: [
+      STUB('k_music', 0, 'Music theory'),
+      STUB('k_music', 1, 'Music production'),
+      STUB('k_music', 2, 'Songwriting'),
+      STUB('k_music', 3, 'Ear training'),
+    ]},
+    { id: 'k_painting', emoji: '🖌️', name: 'Painting', topics: [
+      STUB('k_painting', 0, 'Watercolour'),
+      STUB('k_painting', 1, 'Gouache'),
+      STUB('k_painting', 2, 'Acrylic'),
+      STUB('k_painting', 3, 'Oil'),
+    ]},
+    { id: 'k_digital_art', emoji: '🖼️', name: 'Digital art', topics: [] },
+  ];
+  const existing = new Set(state.skill.map(d => d.id));
+  for (const def of defs) {
+    if (!existing.has(def.id)) state.skill.push(def);
   }
 }
 
