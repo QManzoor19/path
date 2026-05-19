@@ -1862,7 +1862,34 @@ function migrate(s) {
   if (window.MyPathHistory) MyPathHistory.apply(s);
   addNewSkeletonDomains(s);
   addSkeletonSkillDomains(s);
+  pruneRetiredSkillSubcategories(s);
   tagScienceSubcategories(s);
+}
+
+/* Remove placeholder stubs for retired subcategory sections, but only
+   if the user hasn't touched them (still the auto-generated label and
+   no comfort/notes/resources). User-modified topics survive — they
+   keep their old era and the user can clean them up via the UI. */
+function pruneRetiredSkillSubcategories(state) {
+  if (!Array.isArray(state.skill)) return;
+  const RETIRED = {
+    'k_music':    new Set(['Songwriting']),
+    'k_painting': new Set(['Acrylic', 'Oil']),
+  };
+  const isUntouchedStub = (t) => {
+    if (typeof t.label !== 'string') return false;
+    if (!/^add your first .* topic$/i.test(t.label.trim())) return false;
+    if ((t.comfort || 0) !== 0) return false;
+    if (t.notes && String(t.notes).trim()) return false;
+    if (Array.isArray(t.notesList) && t.notesList.length) return false;
+    if (Array.isArray(t.resources) && t.resources.length) return false;
+    return true;
+  };
+  for (const d of state.skill) {
+    const eras = RETIRED[d.id];
+    if (!eras || !Array.isArray(d.topics)) continue;
+    d.topics = d.topics.filter(t => !(t.era && eras.has(t.era) && isUntouchedStub(t)));
+  }
 }
 
 /* New subject domains the user asked for — added once, never overwritten. */
@@ -1910,14 +1937,11 @@ function addSkeletonSkillDomains(state) {
     { id: 'k_music', emoji: '🎵', name: 'Music', topics: [
       STUB('k_music', 0, 'Music theory'),
       STUB('k_music', 1, 'Music production'),
-      STUB('k_music', 2, 'Songwriting'),
       STUB('k_music', 3, 'Ear training'),
     ]},
     { id: 'k_painting', emoji: '🖌️', name: 'Painting', topics: [
       STUB('k_painting', 0, 'Watercolour'),
       STUB('k_painting', 1, 'Gouache'),
-      STUB('k_painting', 2, 'Acrylic'),
-      STUB('k_painting', 3, 'Oil'),
     ]},
     { id: 'k_digital_art', emoji: '🖼️', name: 'Digital art', topics: [] },
   ];
