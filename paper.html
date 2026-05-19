@@ -644,6 +644,140 @@
   body.dark .topic.active .label { color: #f0a07a; }
   .topic.active .label::before { content: '★ '; }
 
+  /* view toggle (list vs gallery) */
+  .view-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--bg-2);
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+  .view-btn {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .view-btn:hover { color: var(--ink); }
+  .view-btn.on {
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  body.dark .view-btn.on { background: rgba(255,255,255,0.08); }
+  .view-btn .vb-ico { font-size: 14px; line-height: 1; }
+
+  /* gallery layout */
+  .topics.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .topics.gallery .topic-section { grid-column: 1 / -1; }
+  .topics.gallery .topic {
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 0;
+    aspect-ratio: 1 / 1.15;
+    overflow: hidden;
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%),
+      var(--topic-cover, var(--card));
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .topics.gallery .topic:not([style*="--topic-cover"]) {
+    background: var(--card);
+    color: var(--ink);
+    text-shadow: none;
+    border: 1px solid var(--line);
+  }
+  .topics.gallery .topic.has-cover {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 100%),
+      var(--topic-cover) center/cover no-repeat;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    border: none;
+  }
+  .topics.gallery .topic.no-cover {
+    background: var(--card);
+    color: var(--ink);
+    text-shadow: none;
+  }
+  .topics.gallery .topic .label {
+    font-size: 15px;
+    line-height: 1.25;
+    padding: 10px 12px 12px;
+    font-weight: 600;
+    z-index: 2;
+  }
+  .topics.gallery .topic .t-icon {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 26px;
+    z-index: 2;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+  .topics.gallery .topic .check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+  }
+  .topics.gallery .topic .cf-bar {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    z-index: 2;
+  }
+  .topics.gallery .topic .resource-count {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    backdrop-filter: blur(4px);
+  }
+  .topics.gallery .topic.no-cover .resource-count {
+    background: var(--bg-2);
+    color: var(--ink-soft);
+    backdrop-filter: none;
+  }
+  .topics.gallery .topic .t-drag,
+  .topics.gallery .topic .remove { display: none; }
+  .topics.gallery .topic:hover { transform: translateY(-2px); }
+  .topics.gallery .topic.active {
+    box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(194,83,42,0.25);
+    background: linear-gradient(135deg, rgba(194,83,42,0.18), var(--card));
+  }
+  .topics.gallery .topic.active.has-cover {
+    box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(194,83,42,0.25);
+  }
+  .topics.gallery .topic.active .label::before { content: '★ '; }
+  .topics.gallery .topic.done { opacity: 0.78; }
+  .topics.gallery .topic.done .label { text-decoration: line-through; }
+
   /* working on toggle (on topic page) */
   .active-toggle {
     background: transparent;
@@ -1532,6 +1666,9 @@
     .topic .chev { display: none; }
     .topic .check { width: 24px; height: 24px; }
     .detail-head h2 { font-size: 26px; }
+    .topics.gallery { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .topics.gallery .topic .label { font-size: 14px; padding: 8px 10px 10px; }
+    .topics.gallery .topic .t-icon { font-size: 22px; top: 8px; left: 10px; }
     .panel { padding: 16px; }
     .topic-title-row h2 { font-size: 24px; }
     /* iOS: input font-size >= 16px prevents zoom-on-focus */
@@ -1600,6 +1737,10 @@
     <div class="detail-head">
       <span class="demoji" id="d-emoji"></span>
       <h2 id="d-name"></h2>
+      <div class="view-toggle" id="view-toggle" role="tablist" aria-label="Topic view">
+        <button class="view-btn" data-view="list" title="List view" aria-label="List view"><span class="vb-ico">≡</span><span>list</span></button>
+        <button class="view-btn" data-view="gallery" title="Gallery view" aria-label="Gallery view"><span class="vb-ico">▦</span><span>gallery</span></button>
+      </div>
     </div>
     <div class="detail-progress">
       <span id="d-progress"></span>
@@ -1910,6 +2051,16 @@ if (document.readyState === 'loading') {
 /* ---------- topic font picker ---------- */
 const FONT_KEY = 'path:font';
 const FONT_SIZE_KEY = 'path:fontsize';
+const TOPIC_VIEW_KEY = 'path:topicView';
+function getTopicView() {
+  try {
+    const v = localStorage.getItem(TOPIC_VIEW_KEY);
+    return v === 'gallery' ? 'gallery' : 'list';
+  } catch (e) { return 'list'; }
+}
+function setTopicView(v) {
+  try { localStorage.setItem(TOPIC_VIEW_KEY, v); } catch (e) {}
+}
 const FONTS = [
   { id: 'fraunces',   family: "'Fraunces', serif",            weight: 500, base: 16.5, label: 'Fraunces' },
   { id: 'newsreader', family: "'Newsreader', serif",          weight: 500, base: 17,   label: 'Newsreader' },
@@ -2562,6 +2713,9 @@ function renderTopics() {
   if (!d) { closeDetail(); return; }
   const isSkill = currentDomain.kind === 'skill';
   const ul = document.getElementById('topics');
+  const view = getTopicView();
+  ul.className = 'topics ' + view;
+  syncViewToggle(view);
   ul.innerHTML = '';
   let lastEra = null;
   for (let i = 0; i < d.topics.length; i++) {
@@ -2575,7 +2729,9 @@ function renderTopics() {
     }
     const li = document.createElement('li');
     const comfort = t.comfort || 0;
-    li.className = 'topic' + (comfort >= 10 ? ' done' : '') + (t.active ? ' active' : '');
+    const hasCover = !!t.cover;
+    li.className = 'topic' + (comfort >= 10 ? ' done' : '') + (t.active ? ' active' : '') + (hasCover ? ' has-cover' : ' no-cover');
+    if (hasCover) li.style.setProperty('--topic-cover', `url("${t.cover.replace(/"/g, '\\"')}")`);
     li.dataset.tid = t.id;
     const rcount = (t.resources && t.resources.length) || 0;
     const hasNotes = t.notes && t.notes.trim().length > 0;
@@ -3345,6 +3501,21 @@ function addTopic() {
 }
 
 document.getElementById('back').addEventListener('click', closeDetail);
+
+/* ---------- topic view toggle (list / gallery) ---------- */
+function syncViewToggle(view) {
+  const btns = document.querySelectorAll('#view-toggle .view-btn');
+  btns.forEach(b => b.classList.toggle('on', b.dataset.view === view));
+}
+document.querySelectorAll('#view-toggle .view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = btn.dataset.view;
+    setTopicView(v);
+    if (currentDomain) renderTopics();
+    else syncViewToggle(v);
+  });
+});
+syncViewToggle(getTopicView());
 
 /* ---------- domain modal (add + edit) ---------- */
 let modalKind = null;
