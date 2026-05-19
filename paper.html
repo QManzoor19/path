@@ -510,6 +510,111 @@
     transition: border-color 0.15s, background 0.15s;
   }
   .topic:hover { border-color: var(--accent-soft); }
+  .topic.active {
+    border-color: var(--accent);
+    background: linear-gradient(90deg, rgba(194,83,42,0.10) 0%, var(--card) 65%);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  body.dark .topic.active {
+    background: linear-gradient(90deg, rgba(224,123,80,0.14) 0%, var(--card) 65%);
+  }
+  .topic.active .label { color: var(--accent); font-weight: 600; }
+  body.dark .topic.active .label { color: #f0a07a; }
+  .topic.active .label::before { content: '★ '; }
+
+  /* working on toggle (on topic page) */
+  .active-toggle {
+    background: transparent;
+    border: 1.5px solid var(--line);
+    color: var(--ink-soft);
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .active-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .active-toggle.on {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .active-toggle.on:hover { background: var(--accent); opacity: 0.9; }
+
+  /* "working on now" section at top of home */
+  .working-on {
+    margin: 0 0 28px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(194,83,42,0.08), rgba(194,83,42,0.02));
+    border: 1px solid rgba(194,83,42,0.20);
+    border-radius: 14px;
+  }
+  body.dark .working-on {
+    background: linear-gradient(135deg, rgba(224,123,80,0.12), rgba(224,123,80,0.03));
+    border-color: rgba(224,123,80,0.25);
+  }
+  .working-on h3 {
+    margin: 0 0 12px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .working-on ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .working-on .wo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .working-on .wo-item:hover {
+    border-color: var(--accent);
+    transform: translateX(2px);
+  }
+  .working-on .wo-icon { font-size: 16px; flex-shrink: 0; line-height: 1; }
+  .working-on .wo-label {
+    flex: 1;
+    font-family: var(--topic-font, 'Fraunces', serif);
+    font-weight: var(--topic-font-weight, 500);
+    font-size: 15px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .working-on .wo-domain {
+    color: var(--ink-soft);
+    font-size: 12px;
+    flex-shrink: 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+  }
+  .working-on .wo-empty {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
   .topic .check {
     width: 24px;
     height: 24px;
@@ -1298,6 +1403,10 @@
 
   <!-- HOME VIEW -->
   <div class="home" id="home">
+    <div class="working-on" id="working-on" style="display:none;">
+      <h3>★ Working on now</h3>
+      <ul id="working-on-list"></ul>
+    </div>
     <div class="section" data-kind="subject">
       <div class="section-head">
         <h2>📚 Subjects</h2>
@@ -1351,6 +1460,7 @@
         <h2 id="topic-name"></h2>
         <div class="topic-status" id="topic-status"></div>
       </div>
+      <button class="active-toggle" id="topic-active-toggle" title="Mark as currently working on">★ working on this</button>
       <button class="topic-edit-btn" id="topic-edit-btn" title="Edit topic">✎ edit</button>
     </div>
     <div class="panel" id="topic-comfort-panel">
@@ -2018,9 +2128,46 @@ function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 let currentDomain = null;
 
 function render() {
+  renderWorkingOn();
   renderGrid('subject');
   renderGrid('skill');
   renderOverall();
+}
+
+function renderWorkingOn() {
+  const wrap = document.getElementById('working-on');
+  const list = document.getElementById('working-on-list');
+  if (!wrap || !list) return;
+  const items = [];
+  for (const kind of ['subject', 'skill']) {
+    for (const d of state[kind]) {
+      for (const t of d.topics) {
+        if (t.active) items.push({ kind, d, t });
+      }
+    }
+  }
+  if (items.length === 0) {
+    wrap.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  wrap.style.display = '';
+  list.innerHTML = '';
+  for (const { kind, d, t } of items) {
+    const li = document.createElement('li');
+    li.className = 'wo-item';
+    const icon = t.icon || d.emoji || '★';
+    li.innerHTML = `
+      <span class="wo-icon">${escapeHtml(icon)}</span>
+      <span class="wo-label">${escapeHtml(t.label)}</span>
+      <span class="wo-domain">${escapeHtml(d.name)}</span>
+    `;
+    li.addEventListener('click', () => {
+      currentDomain = { kind, id: d.id };
+      openTopic(kind, d.id, t.id);
+    });
+    list.appendChild(li);
+  }
 }
 
 function renderGrid(kind) {
@@ -2125,7 +2272,7 @@ function renderTopics() {
     }
     const li = document.createElement('li');
     const comfort = t.comfort || 0;
-    li.className = 'topic' + (comfort >= 10 ? ' done' : '');
+    li.className = 'topic' + (comfort >= 10 ? ' done' : '') + (t.active ? ' active' : '');
     li.dataset.tid = t.id;
     const rcount = (t.resources && t.resources.length) || 0;
     const hasNotes = t.notes && t.notes.trim().length > 0;
@@ -2448,6 +2595,12 @@ function renderTopicState() {
   else if (comfort < 7) status.textContent = 'getting comfortable';
   else status.textContent = 'almost there';
   document.getElementById('topic-comfort').innerHTML = MyPathComfort.bar(comfort, 'lg');
+  // active / "working on this" toggle state
+  const at = document.getElementById('topic-active-toggle');
+  if (at) {
+    at.classList.toggle('on', !!t.active);
+    at.textContent = t.active ? '★ working on' : '★ working on this';
+  }
 }
 
 function urlDomain(url) {
@@ -2682,6 +2835,15 @@ document.getElementById('topic-back').addEventListener('click', closeTopic);
 document.getElementById('topic-edit-btn').addEventListener('click', () => {
   const t = getTopic();
   if (t) openTopicEditModal(t);
+});
+document.getElementById('topic-active-toggle').addEventListener('click', () => {
+  const t = getTopic();
+  if (!t) return;
+  t.active = !t.active;
+  save();
+  renderTopicState();
+  // Re-render the home view so the "Working on now" list updates
+  renderWorkingOn();
 });
 MyPathComfort.attachBars(document.getElementById('topic-comfort-panel'), (v, barEl) => {
   const t = getTopic();
