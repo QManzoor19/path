@@ -2290,6 +2290,41 @@ function migrate(s) {
   addSkeletonSkillDomains(s);
   pruneRetiredSkillSubcategories(s);
   tagScienceSubcategories(s);
+  addCookingExtras(s);
+}
+
+/* One-time: append the user's cooking dish wishlist to the Cooking skill
+   if they haven't already been added. Gated by a localStorage flag, so if
+   the user deletes any of them later the migration won't reintroduce them. */
+function addCookingExtras(s) {
+  const FLAG = 'path:cooking_extras_v1';
+  try { if (localStorage.getItem(FLAG)) return; } catch (e) { return; }
+  if (!s || !Array.isArray(s.skill)) return;
+  const cooking = s.skill.find(d => d.id === 'k_cook' || (d.name || '').toLowerCase() === 'cooking');
+  if (!cooking) return;
+  const EXTRAS = [
+    'Roti', 'Noodles', 'Chicken', 'Red pasta', 'Stir-fry', 'Keema',
+    'Panini', 'Wraps', 'Chicken curry', 'Korma', 'Spinach curry',
+    'Chicken pilau', 'Pizza', 'Chicken jalfrezi', 'Noodle keema',
+    'Lasagna', 'Biriyani', 'Koftas', 'Samosas', 'Spring rolls',
+    'Butter chicken', 'Tandoori chicken', 'Chicken pie',
+  ];
+  if (!Array.isArray(cooking.topics)) cooking.topics = [];
+  const existing = new Set(cooking.topics.map(t => (t.label || '').toLowerCase()));
+  let added = 0;
+  for (const label of EXTRAS) {
+    if (existing.has(label.toLowerCase())) continue;
+    cooking.topics.push({
+      id: 't_cook_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Math.random().toString(36).slice(2,5),
+      label,
+      done: false,
+      comfort: 0,
+      notes: '',
+      resources: [],
+    });
+    added++;
+  }
+  try { localStorage.setItem(FLAG, '1'); } catch (e) {}
 }
 
 /* Remove placeholder stubs for retired subcategory sections, but only
