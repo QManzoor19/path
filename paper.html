@@ -2932,9 +2932,12 @@ function setupTopicDrag(ul, d) {
       isGallery,
     };
 
-    handle.addEventListener('pointermove', onPointerMove);
-    handle.addEventListener('pointerup', onPointerUp);
-    handle.addEventListener('pointercancel', onPointerCancel);
+    // Attach to document (not the handle) so it keeps firing regardless of
+    // where the pointer roams. Handles renderTopics rebuilding the DOM
+    // between drags too — there's no stale element reference to break.
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
   };
 
   const enterDrag = () => {
@@ -3031,10 +3034,9 @@ function setupTopicDrag(ul, d) {
 
   const cleanup = () => {
     if (!dragState) return;
-    const { handle } = dragState;
-    handle.removeEventListener('pointermove', onPointerMove);
-    handle.removeEventListener('pointerup', onPointerUp);
-    handle.removeEventListener('pointercancel', onPointerCancel);
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    document.removeEventListener('pointercancel', onPointerCancel);
     document.body.style.cursor = '';
     dragState = null;
   };
