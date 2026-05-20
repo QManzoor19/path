@@ -2880,7 +2880,24 @@ function renderTopics() {
 }
 
 function setupTopicDrag(ul, d) {
+  // Idempotent — only attach the listener the first time. On later renders
+  // just refresh the "current domain id" so the live topic list is found
+  // at drag-time. Without this guard, each renderTopics() call would stack
+  // another pointerdown listener and they'd fight on the second drag.
+  if (ul._dragInit) {
+    ul._dragDomainId = d.id;
+    return;
+  }
+  ul._dragInit = true;
+  ul._dragDomainId = d.id;
+
   let dragState = null;
+
+  const currentDomainObj = () => {
+    const id = ul._dragDomainId;
+    if (!currentDomain || currentDomain.id !== id) return null;
+    return state[currentDomain.kind].find(x => x.id === id) || null;
+  };
 
   const onPointerDown = (e) => {
     const handle = e.target.closest('.t-drag');
@@ -2888,6 +2905,8 @@ function setupTopicDrag(ul, d) {
     const li = handle.closest('.topic');
     if (!li || !ul.contains(li)) return;
     if (e.button !== undefined && e.button !== 0) return;
+    const dom = currentDomainObj();
+    if (!dom) return;
     e.preventDefault();
     e.stopPropagation();
     try { handle.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2899,6 +2918,7 @@ function setupTopicDrag(ul, d) {
       li,
       tid: li.dataset.tid,
       handle,
+      domain: dom,
       startX: e.clientX,
       startY: e.clientY,
       offsetX: e.clientX - rect.left,
@@ -3056,16 +3076,17 @@ function setupTopicDrag(ul, d) {
       }
     }
 
-    const oldIdx = d.topics.findIndex(x => x.id === tid);
+    const dom = dragState.domain;
+    const oldIdx = dom.topics.findIndex(x => x.id === tid);
     if (oldIdx !== -1) {
-      const [item] = d.topics.splice(oldIdx, 1);
-      const insertAt = Math.min(targetIdx, d.topics.length);
-      d.topics.splice(insertAt, 0, item);
+      const [item] = dom.topics.splice(oldIdx, 1);
+      const insertAt = Math.min(targetIdx, dom.topics.length);
+      dom.topics.splice(insertAt, 0, item);
       // Inherit era from the neighbor above (or below if at top) so the
       // section the topic was dropped into stays visually coherent.
       if (item.era !== undefined) {
-        const prev = insertAt > 0 ? d.topics[insertAt - 1] : null;
-        const next = insertAt < d.topics.length - 1 ? d.topics[insertAt + 1] : null;
+        const prev = insertAt > 0 ? dom.topics[insertAt - 1] : null;
+        const next = insertAt < dom.topics.length - 1 ? dom.topics[insertAt + 1] : null;
         if (prev && prev.era) {
           item.era = prev.era;
           item.timespan = prev.timespan;
