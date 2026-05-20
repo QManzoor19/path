@@ -766,6 +766,18 @@
   }
   .topics.gallery .topic .t-drag,
   .topics.gallery .topic .remove { display: none; }
+  .topics.gallery .topic { cursor: grab; }
+  .topics.gallery .topic.drag-ready {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25), 0 0 0 2px var(--accent);
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 5;
+  }
+  .topics.gallery .topic.dragging { cursor: grabbing; }
+  .topics.gallery .topic-drop-placeholder {
+    aspect-ratio: 1 / 1.15;
+    height: auto !important;
+  }
   .topics.gallery .topic:hover { transform: translateY(-2px); }
   .topics.gallery .topic.active {
     box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(194,83,42,0.25);
@@ -2846,13 +2858,31 @@ function setupTopicDrag(ul, d) {
   let dragState = null;
 
   const onPointerDown = (e) => {
-    const handle = e.target.closest('.t-drag');
+    const onTDrag = e.target.closest('.t-drag');
+    const isGallery = ul.classList.contains('gallery');
+    let handle = onTDrag;
+    let viaLongPress = false;
+
+    if (!handle && isGallery) {
+      // In gallery mode, any "safe" area of the card initiates a long-press drag.
+      const card = e.target.closest('.topic');
+      if (card && !e.target.closest('button, input, textarea, select, a, .check, .cf-bar, .label-input, .t-icon, .resource-count')) {
+        handle = card;
+        viaLongPress = true;
+      }
+    }
+
     if (!handle) return;
-    const li = handle.closest('.topic');
+    const li = handle.classList.contains('topic') ? handle : handle.closest('.topic');
     if (!li || !ul.contains(li)) return;
     if (e.button !== undefined && e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
+
+    // For explicit .t-drag handle, lock the gesture immediately.
+    // For whole-card (gallery) drag, defer — let the long-press timer decide.
+    if (!viaLongPress) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try { handle.setPointerCapture(e.pointerId); } catch (err) {}
 
     const rect = li.getBoundingClientRect();
@@ -2863,13 +2893,28 @@ function setupTopicDrag(ul, d) {
       handle,
       startX: e.clientX,
       startY: e.clientY,
+      offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
       width: rect.width,
       height: rect.height,
       left: rect.left,
+      top: rect.top,
       entered: false,
       placeholder: null,
+      isGallery,
+      viaLongPress,
+      ready: !viaLongPress, // explicit handle is ready immediately; long-press needs timer
+      longPressTimer: null,
     };
+
+    if (viaLongPress) {
+      dragState.longPressTimer = setTimeout(() => {
+        if (!dragState) return;
+        dragState.ready = true;
+        li.classList.add('drag-ready');
+        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
+      }, 320);
+    }
 
     handle.addEventListener('pointermove', onPointerMove);
     handle.addEventListener('pointerup', onPointerUp);
@@ -2879,42 +2924,89 @@ function setupTopicDrag(ul, d) {
   const enterDrag = () => {
     if (!dragState || dragState.entered) return;
     dragState.entered = true;
-    const { li, height, width, left } = dragState;
+    const { li, height, width, left, top, isGallery } = dragState;
     const placeholder = document.createElement('li');
     placeholder.className = 'topic-drop-placeholder';
-    placeholder.style.height = height + 'px';
+    if (isGallery) {
+      // grid cell sized
+      placeholder.style.width = width + 'px';
+      placeholder.style.height = height + 'px';
+    } else {
+      placeholder.style.height = height + 'px';
+    }
     li.parentNode.insertBefore(placeholder, li.nextSibling);
     dragState.placeholder = placeholder;
+    li.classList.remove('drag-ready');
     li.classList.add('dragging');
     li.style.position = 'fixed';
     li.style.left = left + 'px';
     li.style.width = width + 'px';
-    li.style.top = (dragState.startY - dragState.offsetY) + 'px';
+    li.style.top = top + 'px';
+    if (isGallery) li.style.height = height + 'px';
     document.body.style.cursor = 'grabbing';
   };
 
   const onPointerMove = (e) => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
-    e.preventDefault();
     const dx = e.clientX - dragState.startX;
     const dy = e.clientY - dragState.startY;
+
+    if (dragState.viaLongPress && !dragState.ready) {
+      // User started moving before the long-press timer fired — they were
+      // probably trying to scroll. Abort drag.
+      if (Math.abs(dx) + Math.abs(dy) > 10) {
+        clearTimeout(dragState.longPressTimer);
+        cleanup();
+      }
+      return;
+    }
+
+    e.preventDefault();
     if (!dragState.entered) {
-      if (Math.abs(dx) + Math.abs(dy) > 5) enterDrag();
+      if (dragState.viaLongPress || Math.abs(dx) + Math.abs(dy) > 5) enterDrag();
       else return;
     }
     // move floating element
     dragState.li.style.top = (e.clientY - dragState.offsetY) + 'px';
+    if (dragState.isGallery) {
+      dragState.li.style.left = (e.clientX - dragState.offsetX) + 'px';
+    }
 
     // find new drop position
     const candidates = Array.from(ul.children).filter((c) =>
       c !== dragState.li && c !== dragState.placeholder
     );
     let dropBefore = null;
-    for (const target of candidates) {
-      const r = target.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      if (e.clientY < mid) { dropBefore = target; break; }
+
+    if (dragState.isGallery) {
+      // For a grid, find the nearest cell to the pointer, then choose
+      // before-or-after based on quadrant.
+      let bestDist = Infinity;
+      let bestCell = null;
+      for (const target of candidates) {
+        const r = target.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dxc = e.clientX - cx;
+        const dyc = e.clientY - cy;
+        const dist = dxc * dxc + dyc * dyc;
+        if (dist < bestDist) { bestDist = dist; bestCell = target; }
+      }
+      if (bestCell) {
+        const r = bestCell.getBoundingClientRect();
+        const before = e.clientY < r.top + r.height / 2 ||
+                       (e.clientY < r.bottom && e.clientX < r.left + r.width / 2);
+        dropBefore = before ? bestCell : bestCell.nextSibling;
+      }
+    } else {
+      // List: first cell whose midpoint is below the pointer.
+      for (const target of candidates) {
+        const r = target.getBoundingClientRect();
+        const mid = r.top + r.height / 2;
+        if (e.clientY < mid) { dropBefore = target; break; }
+      }
     }
+
     if (dropBefore) {
       if (dragState.placeholder.nextSibling !== dropBefore) {
         ul.insertBefore(dragState.placeholder, dropBefore);
@@ -2934,6 +3026,8 @@ function setupTopicDrag(ul, d) {
 
   const cleanup = () => {
     if (!dragState) return;
+    if (dragState.longPressTimer) clearTimeout(dragState.longPressTimer);
+    if (dragState.li) dragState.li.classList.remove('drag-ready');
     const { handle } = dragState;
     handle.removeEventListener('pointermove', onPointerMove);
     handle.removeEventListener('pointerup', onPointerUp);
@@ -2941,6 +3035,16 @@ function setupTopicDrag(ul, d) {
     document.body.style.cursor = '';
     dragState = null;
   };
+
+  function suppressNextClick() {
+    const stop = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      document.removeEventListener('click', stop, true);
+    };
+    document.addEventListener('click', stop, true);
+    setTimeout(() => document.removeEventListener('click', stop, true), 300);
+  }
 
   const onPointerCancel = () => {
     if (!dragState) return cleanup();
@@ -2995,6 +3099,7 @@ function setupTopicDrag(ul, d) {
     li.classList.remove('dragging');
     if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
     cleanup();
+    suppressNextClick();
     renderTopics();
   };
 
